@@ -18,16 +18,7 @@ import { ALL_PROJECTS, ProjectData } from './data/projectsData.ts';
 import { sound } from './utils/audio.ts';
 import { AyushAvatarLogo } from './components/ui/AyushAvatarLogo.tsx';
 
-type ThemeMode = 'night' | 'light' | 'system';
-
 export default function App() {
-  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
-    if (typeof window === 'undefined') return 'system';
-    const savedTheme = window.localStorage.getItem('aayu-theme-mode');
-    return savedTheme === 'night' || savedTheme === 'light' || savedTheme === 'system'
-      ? savedTheme
-      : 'system';
-  });
   const [selectedProject, setSelectedProject] = useState<ProjectData | null>(null);
   const [chatOpen, setChatOpen] = useState<boolean>(false);
   const [isGalaxyLabOpen, setIsGalaxyLabOpen] = useState<boolean>(false);
@@ -40,19 +31,8 @@ export default function App() {
   const [activeSection, setActiveSection] = useState<string>('hero');
 
   useEffect(() => {
-    const colorScheme = window.matchMedia('(prefers-color-scheme: light)');
-    const applyTheme = () => {
-      const resolvedTheme = themeMode === 'system'
-        ? (colorScheme.matches ? 'light' : 'night')
-        : themeMode;
-      document.documentElement.dataset.theme = resolvedTheme;
-      window.localStorage.setItem('aayu-theme-mode', themeMode);
-    };
-
-    applyTheme();
-    colorScheme.addEventListener('change', applyTheme);
-    return () => colorScheme.removeEventListener('change', applyTheme);
-  }, [themeMode]);
+    document.documentElement.dataset.theme = 'night';
+  }, []);
 
   // Sync selected project with URL query param `?project=slug` for deep-linking
   useEffect(() => {
@@ -185,8 +165,6 @@ export default function App() {
 
       {/* Navigation */}
       <Navigation
-        themeMode={themeMode}
-        onThemeChange={setThemeMode}
         reducedMotion={reducedMotion}
         onToggleReducedMotion={() => setReducedMotion(!reducedMotion)}
         activeSection={activeSection}

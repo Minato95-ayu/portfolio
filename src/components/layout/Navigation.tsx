@@ -4,8 +4,6 @@ import { IconGitHub, IconLinkedIn } from '../ui/Icons.tsx';
 import { AyushAvatarLogo } from '../ui/AyushAvatarLogo.tsx';
 
 interface NavigationProps {
-  themeMode: 'night' | 'light' | 'system';
-  onThemeChange: (mode: 'night' | 'light' | 'system') => void;
   reducedMotion: boolean;
   onToggleReducedMotion: () => void;
   activeSection: string;
@@ -16,8 +14,6 @@ interface NavigationProps {
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
-  themeMode,
-  onThemeChange,
   reducedMotion,
   onToggleReducedMotion,
   activeSection,
@@ -112,25 +108,13 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         {/* Right System Controls & Action Triggers */}
         <div className="flex items-center space-x-1.5 sm:space-x-2.5 shrink-0">
-          <label className="sr-only" htmlFor="theme-mode">Color theme</label>
-          <select
-            id="theme-mode"
-            value={themeMode}
-            onChange={(event) => {
-              sound.playClick();
-              const nextMode = event.target.value;
-              if (nextMode === 'night' || nextMode === 'light' || nextMode === 'system') {
-                onThemeChange(nextMode);
-              }
-            }}
-            aria-label="Choose color theme"
-            title="Choose night, light, or system theme"
-            className="max-w-[82px] sm:max-w-none px-1.5 sm:px-2 py-1 text-[10px] sm:text-[11px] font-mono border border-white/10 rounded bg-[#10141A] text-white/80 cursor-pointer focus:outline-none focus:border-[#C6FF3D]"
+          <span
+            className="px-2 py-1 text-[10px] sm:text-[11px] font-mono border border-white/10 rounded bg-[#10141A] text-white/80"
+            aria-label="Night mode always on"
+            title="Night mode is always on"
           >
-            <option value="night">Night</option>
-            <option value="light">Light</option>
-            <option value="system">System</option>
-          </select>
+            NIGHT
+          </span>
 
           {/* Audio SFX Toggle */}
           <button

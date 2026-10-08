@@ -35,14 +35,14 @@ export const ConnectSection: React.FC = () => {
     setStatus('sending');
     setFeedbackMsg('');
 
-    const submission = new URLSearchParams({
+    const submission = {
       name: formData.name,
       email: formData.email,
       interest: formData.interest,
       message: formData.message,
       _subject: `[Portfolio Inquiry] ${formData.interest}`,
       _template: 'table',
-    });
+    };
 
     try {
       const response = await fetch(
@@ -51,9 +51,9 @@ export const ConnectSection: React.FC = () => {
           method: 'POST',
           headers: {
             Accept: 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+            'Content-Type': 'application/json',
           },
-          body: submission.toString(),
+          body: JSON.stringify(submission),
         }
       );
       const result: { success?: boolean | string; message?: string } = await response.json();
@@ -61,8 +61,7 @@ export const ConnectSection: React.FC = () => {
       if (response.ok && (result.success === true || result.success === 'true')) {
         setStatus('success');
         setFeedbackMsg(
-          result.message ||
-            'Message accepted by the email relay. If this is the first submission, activate the form from the email sent to the recipient inbox.'
+          'FormSubmit accepted the submission; this is not confirmation of inbox delivery. For first use, confirm the activation email sent to the recipient inbox, then check Spam if needed.'
         );
         setFormData({
           name: '',
