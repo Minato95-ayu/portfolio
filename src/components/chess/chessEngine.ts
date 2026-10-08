@@ -33,6 +33,17 @@ const PIECE_VALUES: Record<PieceType, number> = {
 
 const MATE_SCORE = 100_000;
 const MAX_QUIESCENCE_DEPTH = 5;
+const MAX_SEARCH_NODES = 10_000;
+const MAX_SEARCH_TIME_MS = 400;
+type EvaluatedPiece = Pick<Piece, 'type' | 'color'>;
+
+class SearchLimitReached extends Error {}
+
+function checkSearchLimit(nodes: { count: number; startedAt: number }): void {
+  if (nodes.count >= MAX_SEARCH_NODES || Date.now() - nodes.startedAt >= MAX_SEARCH_TIME_MS) {
+    throw new SearchLimitReached();
+  }
+}
 
 export function getInitialPosition(): string {
   return new Chess().fen();
@@ -92,6 +103,10 @@ export function applyMove(position: string, move: Move): string {
 }
 
 export function evaluateBoard(board: Board): number {
+  return evaluatePieces(board);
+}
+
+function evaluatePieces(board: readonly (readonly (EvaluatedPiece | null)[])[]): number {
   let score = 0;
   for (let row = 0; row < 8; row++) {
     for (let column = 0; column < 8; column++) {
@@ -114,7 +129,7 @@ export function evaluatePosition(position: string): number {
   const chess = new Chess(position);
   if (chess.isCheckmate()) return chess.turn() === 'w' ? -MATE_SCORE : MATE_SCORE;
   if (chess.isDraw()) return 0;
-  return evaluateBoard(getBoard(position));
+  return evaluatePieces(chess.board());
 }
 
 export function getMaterialScore(position: string): number {
@@ -161,12 +176,20 @@ function orderedMoves(chess: Chess, capturesOnly = false): ChessMove[] {
     .sort((a, b) => moveOrderScore(b) - moveOrderScore(a));
 }
 
-function quiescence(chess: Chess, alpha: number, beta: number, ply: number): number {
+function quiescence(
+  chess: Chess,
+  alpha: number,
+  beta: number,
+  ply: number,
+  nodes: { count: number; startedAt: number },
+): number {
+  nodes.count++;
+  checkSearchLimit(nodes);
   if (chess.isCheckmate()) return -MATE_SCORE + ply;
   if (chess.isDraw()) return 0;
 
   const checked = chess.isCheck();
-  const staticScore = (chess.turn() === 'w' ? 1 : -1) * evaluateBoard(getBoard(chess.fen()));
+  const staticScore = (chess.turn() === 'w' ? 1 : -1) * evaluatePieces(chess.board());
   const standPat = checked ? -Infinity : staticScore;
 
   if (!checked) {
@@ -178,8 +201,12 @@ function quiescence(chess: Chess, alpha: number, beta: number, ply: number): num
   let best = checked ? -Infinity : standPat;
   for (const move of orderedMoves(chess, !checked)) {
     chess.move(move);
-    const score = -quiescence(chess, -beta, -alpha, ply + 1);
-    chess.undo();
+    let score: number;
+    try {
+      score = -quiescence(chess, -beta, -alpha, ply + 1, nodes);
+    } finally {
+      chess.undo();
+    }
     best = Math.max(best, score);
     alpha = Math.max(alpha, score);
     if (alpha >= beta) break;
@@ -193,12 +220,13 @@ function negamax(
   alpha: number,
   beta: number,
   ply: number,
-  nodes: { count: number },
+  nodes: { count: number; startedAt: number },
 ): number {
   nodes.count++;
+  checkSearchLimit(nodes);
   if (chess.isCheckmate()) return -MATE_SCORE + ply;
   if (chess.isDraw()) return 0;
-  if (depth <= 0) return quiescence(chess, alpha, beta, 0);
+  if (depth <= 0) return quiescence(chess, alpha, beta, 0, nodes);
 
   const moves = orderedMoves(chess);
   if (moves.length === 0) return 0;
@@ -206,8 +234,12 @@ function negamax(
   let bestScore = -Infinity;
   for (const move of moves) {
     chess.move(move);
-    const score = -negamax(chess, depth - 1, -beta, -alpha, ply + 1, nodes);
-    chess.undo();
+    let score: number;
+    try {
+      score = -negamax(chess, depth - 1, -beta, -alpha, ply + 1, nodes);
+    } finally {
+      chess.undo();
+    }
     bestScore = Math.max(bestScore, score);
     alpha = Math.max(alpha, score);
     if (alpha >= beta) break;
@@ -219,31 +251,60 @@ export function findBestMove(position: string, color: PieceColor, depth = 3): Se
   const chess = new Chess(position);
   if (chess.turn() !== color || chess.isGameOver()) return null;
 
-  const moves = orderedMoves(chess);
-  if (moves.length === 0) return null;
+  const rootMoves = orderedMoves(chess);
+  if (rootMoves.length === 0) return null;
 
-  let bestMove: ChessMove | null = null;
+  const nodes = { count: 0, startedAt: Date.now() };
+  let bestMove = rootMoves[0];
   let bestScore = -Infinity;
-  let alpha = -Infinity;
-  const beta = Infinity;
-  const nodes = { count: 0 };
-
-  for (const move of moves) {
+  for (const move of rootMoves) {
     chess.move(move);
-    const score = -negamax(chess, depth - 1, -beta, -alpha, 1, nodes);
-    chess.undo();
-    if (score > bestScore) {
-      bestScore = score;
-      bestMove = move;
+    let score: number;
+    try {
+      score = (color === 'w' ? 1 : -1) * evaluatePieces(chess.board());
+    } finally {
+      chess.undo();
     }
-    alpha = Math.max(alpha, score);
+    if (score > bestScore) {
+      bestMove = move;
+      bestScore = score;
+    }
+  }
+  let completedDepth = 1;
+
+  for (let currentDepth = 2; currentDepth <= depth; currentDepth++) {
+    let iterationBestMove = bestMove;
+    let iterationBestScore = -Infinity;
+    let alpha = -Infinity;
+    try {
+      for (const move of rootMoves) {
+        chess.move(move);
+        let score: number;
+        try {
+          score = -negamax(chess, currentDepth - 1, -Infinity, -alpha, 1, nodes);
+        } finally {
+          chess.undo();
+        }
+        if (score > iterationBestScore) {
+          iterationBestScore = score;
+          iterationBestMove = move;
+        }
+        alpha = Math.max(alpha, score);
+      }
+    } catch (error) {
+      if (!(error instanceof SearchLimitReached)) throw error;
+      break;
+    }
+
+    bestMove = iterationBestMove;
+    bestScore = iterationBestScore;
+    completedDepth = currentDepth;
   }
 
-  if (!bestMove) return null;
   return {
     move: fromChessMove(bestMove),
     score: color === 'w' ? bestScore : -bestScore,
-    depth,
+    depth: completedDepth,
     nodes: nodes.count,
   };
 }

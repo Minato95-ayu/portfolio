@@ -10,7 +10,6 @@ import {
   evaluatePosition,
   getPieceMoves,
   applyMove,
-  findBestMove,
 } from './chessEngine.ts';
 import { sound } from '../../utils/audio.ts';
 
@@ -45,7 +44,10 @@ interface NeuralChessProps {
 
 export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
   const botTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const botWorker = useRef<Worker | null>(null);
+  const gameContainer = useRef<HTMLDivElement | null>(null);
   const BOT_MOVE_DELAY_MS = 180;
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [position, setPosition] = useState<string>(getInitialPosition);
   const [history, setHistory] = useState<{ position: string; move: Move }[]>([]);
   const [selectedSquare, setSelectedSquare] = useState<[number, number] | null>(null);
@@ -59,6 +61,11 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
   const priorPositions = history.map(({ position: priorPosition }) => priorPosition);
   const gameStatus = getGameStatus(position, priorPositions);
   const positionEval = evaluatePosition(position);
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === gameContainer.current);
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
   const capturedWhite = history
     .filter(({ move }) => move.captured?.color === 'w')
     .map(({ move }) => PIECE_SYMBOLS[`w${move.captured?.type}`] || '');
@@ -86,8 +93,33 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
 
     botTimer.current = setTimeout(() => {
       botTimer.current = null;
-      const result = findBestMove(currentPosition, 'b', effectiveBotDepth(difficulty));
-      if (result) {
+      let worker: Worker;
+      try {
+        worker = new Worker(new URL('./chessWorker.ts', import.meta.url), { type: 'module' });
+      } catch (error) {
+        setIsBotThinking(false);
+        setStatusMessage(`Could not start bot worker: ${error instanceof Error ? error.message : String(error)}`);
+        return;
+      }
+
+      botWorker.current = worker;
+      worker.onmessage = (event: MessageEvent<{ result?: SearchResult | null; error?: string }>) => {
+        if (botWorker.current !== worker) return;
+        worker.terminate();
+        botWorker.current = null;
+        if ('error' in event.data) {
+          setIsBotThinking(false);
+          setStatusMessage(`Bot search failed: ${event.data.error}`);
+          return;
+        }
+
+        const result = event.data.result;
+        if (!result) {
+          setIsBotThinking(false);
+          setStatusMessage('No legal move is available. The game has ended.');
+          return;
+        }
+
         const bestMove = result.move;
         if (bestMove.captured) {
           sound.playClick();
@@ -110,15 +142,32 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
                 ? `AAYU played ${bestMove.notation} and gave check.`
                 : `AAYU played ${bestMove.notation}. Your move.`
         );
-      } else {
+      };
+      worker.onerror = (event) => {
+        if (botWorker.current !== worker) return;
+        worker.terminate();
+        botWorker.current = null;
         setIsBotThinking(false);
-        setStatusMessage('No legal move is available. The game has ended.');
+        setStatusMessage(`Bot worker failed: ${event.message || 'Unknown worker error.'}`);
+      };
+      try {
+        worker.postMessage({
+          position: currentPosition,
+          color: 'b',
+          depth: effectiveBotDepth(difficulty),
+        });
+      } catch (error) {
+        worker.terminate();
+        botWorker.current = null;
+        setIsBotThinking(false);
+        setStatusMessage(`Could not send position to bot worker: ${error instanceof Error ? error.message : String(error)}`);
       }
     }, BOT_MOVE_DELAY_MS);
   }, [difficulty, effectiveBotDepth, priorPositions]);
 
   useEffect(() => () => {
     if (botTimer.current) clearTimeout(botTimer.current);
+    botWorker.current?.terminate();
   }, []);
 
   // Handle Square Selection / Click
@@ -176,6 +225,8 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
   const handleReset = () => {
     sound.playClick();
     if (botTimer.current) clearTimeout(botTimer.current);
+    botWorker.current?.terminate();
+    botWorker.current = null;
     botTimer.current = null;
     setPosition(getInitialPosition());
     setHistory([]);
@@ -184,6 +235,18 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
     setIsBotThinking(false);
     setLastSearch(null);
     setStatusMessage('Board reset. White to move.');
+  };
+
+  const handleToggleFullscreen = async () => {
+    try {
+      if (document.fullscreenElement === gameContainer.current) {
+        await document.exitFullscreen();
+      } else {
+        await gameContainer.current?.requestFullscreen();
+      }
+    } catch (error) {
+      setStatusMessage(`Could not change full-screen mode: ${error instanceof Error ? error.message : String(error)}`);
+    }
   };
 
   const handleUndo = () => {
@@ -200,7 +263,13 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="bg-[#0c1017] border border-white/10 rounded-sm p-4 sm:p-6 text-white max-w-4xl mx-auto shadow-2xl">
+    <div
+      ref={gameContainer}
+      className={isFullscreen
+        ? 'fixed inset-0 z-[100] overflow-y-auto bg-[#07090e] p-3 text-white sm:p-6'
+        : 'mx-auto max-w-4xl rounded-sm border border-white/10 bg-[#0c1017] p-4 text-white shadow-2xl sm:p-6'}
+    >
+      <div className={`mx-auto w-full bg-[#0c1017] ${isFullscreen ? 'max-w-7xl border border-white/10 p-3 sm:p-6' : ''}`}>
       {/* Top Console Bar */}
       <div className="flex flex-wrap items-center justify-between pb-4 border-b border-white/10 gap-3">
         <div className="flex items-center space-x-3">
@@ -245,6 +314,15 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
             </button>
           ))}
 
+          <button
+            type="button"
+            onClick={handleToggleFullscreen}
+            aria-label={isFullscreen ? 'Exit full screen chess' : 'Play chess in full screen'}
+            className="ml-1 rounded border border-[#C6FF3D]/40 px-2 py-1 text-[10px] text-[#C6FF3D] transition-colors hover:bg-[#C6FF3D]/10 sm:ml-2 sm:text-[11px]"
+          >
+            {isFullscreen ? 'EXIT FULL SCREEN' : 'FULL SCREEN'}
+          </button>
+
           {onClose && (
             <button
               type="button"
@@ -270,7 +348,13 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
 
           {/* 8x8 Chessboard */}
           <div className="relative border-2 border-white/20 rounded-sm p-1 bg-[#131922] shadow-[0_0_30px_rgba(0,0,0,0.8)] max-w-full">
-            <div className="grid grid-cols-8 grid-rows-8 w-[280px] h-[280px] xs:w-[320px] xs:h-[320px] sm:w-[360px] sm:h-[360px] max-w-full aspect-square">
+            <div
+              className="grid max-w-full grid-cols-8 grid-rows-8 aspect-square"
+              style={{
+                width: isFullscreen ? 'min(72vh, 76vw, 560px)' : 'min(82vw, 360px)',
+                height: isFullscreen ? 'min(72vh, 76vw, 560px)' : 'min(82vw, 360px)',
+              }}
+            >
               {board.map((row, r) =>
                 row.map((cell, c) => {
                   const isLight = (r + c) % 2 === 0;
@@ -443,6 +527,7 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
