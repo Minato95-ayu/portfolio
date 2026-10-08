@@ -11,6 +11,7 @@ interface ExpertiseDomain {
   technologies: string[];
   focusAreas: string[];
   principles: string;
+  phase?: string;
 }
 
 const DOMAINS: ExpertiseDomain[] = [
@@ -73,6 +74,54 @@ const DOMAINS: ExpertiseDomain[] = [
       'High-throughput client-side 3D WebGL and interactive canvas visualization',
     ],
     principles: 'Code clarity, strict type safety, zero bloat, and resilient user interfaces that never leave users stranded.',
+  },
+  {
+    id: 'systems-mathematics',
+    title: 'Systems Mathematics',
+    tagline: 'Mathematical foundations for algorithms, machine learning, and efficient systems.',
+    color: '#C6FF3D',
+    icon: <IconCompiler size={24} className="text-[#C6FF3D]" />,
+    technologies: ['Linear Algebra', 'Probability', 'Discrete Math', 'Graph Theory', 'Optimization', 'Complexity'],
+    focusAreas: [
+      'Vectors, matrices, and linear transformations behind machine learning',
+      'Probability, statistics, and uncertainty in model evaluation',
+      'Discrete mathematics, graph theory, and algorithmic reasoning',
+      'Optimization and asymptotic analysis for computational cost',
+    ],
+    principles: 'Mathematics provides a way to reason about correctness, performance, and model behavior before implementation.',
+    phase: 'LEARNING TRACK',
+  },
+  {
+    id: 'os-networking',
+    title: 'Operating Systems & Networking',
+    tagline: 'Linux internals, network protocols, and the foundations of reliable services.',
+    color: '#38BDF8',
+    icon: <IconAdumate size={24} className="text-[#38BDF8]" />,
+    technologies: ['Linux', 'Processes', 'Virtual Memory', 'TCP/IP', 'DNS', 'HTTP / TLS'],
+    focusAreas: [
+      'Operating-system concepts: processes, scheduling, memory, and system calls',
+      'Networking fundamentals: addressing, routing, TCP/IP, and DNS',
+      'HTTP and TLS as the basis for secure service communication',
+      'Observability and safe troubleshooting in systems you own or are authorized to test',
+    ],
+    principles: 'Understanding the OS and network boundaries makes software easier to diagnose, secure, and operate.',
+    phase: 'LEARNING TRACK',
+  },
+  {
+    id: 'llm-blockchain-security',
+    title: 'LLM & Blockchain Systems',
+    tagline: 'Language-model infrastructure, distributed ledgers, and defensive security.',
+    color: '#A855F7',
+    icon: <IconSentinel size={24} className="text-[#A855F7]" />,
+    technologies: ['LLM Inference', 'RAG', 'Evaluation', 'Prompt Safety', 'EVM', 'Smart-Contract Invariants'],
+    focusAreas: [
+      'LLM inference pipelines, retrieval-augmented generation, and evaluation',
+      'Threat modeling and defensive testing in authorized environments',
+      'Blockchain consensus concepts and distributed-state trade-offs',
+      'Smart-contract invariants, secure coding, and responsible vulnerability remediation',
+    ],
+    principles: 'Treat model outputs and distributed state as untrusted until their assumptions and failure modes have been tested.',
+    phase: 'LEARNING TRACK',
   },
 ];
 
@@ -151,7 +200,7 @@ export const ExpertiseSection: React.FC = () => {
 
                 <div className="flex items-center space-x-4 font-mono text-xs">
                   <span className="text-white/40 hidden lg:inline">
-                    {domain.technologies.slice(0, 3).join(' · ')}
+                    {domain.phase ?? domain.technologies.slice(0, 3).join(' · ')}
                   </span>
                   <span
                     className="px-3 py-1 rounded border border-white/10 text-white/70 hover:text-white"
@@ -168,7 +217,7 @@ export const ExpertiseSection: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                     <div className="md:col-span-7 space-y-3">
                       <div className="text-[11px] font-mono text-white/40 uppercase tracking-wider">
-                        CORE ENGINEERING FOCUS
+                        {domain.phase ? 'LEARNING ROADMAP' : 'CORE ENGINEERING FOCUS'}
                       </div>
                       <ul className="space-y-2 text-xs text-white/80 font-mono">
                         {domain.focusAreas.map((area) => (
@@ -193,7 +242,7 @@ export const ExpertiseSection: React.FC = () => {
                   {/* Verified Toolchain Badges (Unboxed typography) */}
                   <div className="pt-3 border-t border-white/[0.06]">
                     <div className="text-[11px] font-mono text-white/40 mb-2 uppercase tracking-wider">
-                      ACTIVE SYSTEM TOOLCHAIN & RUNTIMES
+                      {domain.phase ? 'LEARNING TRACK TOOLCHAIN & TOPICS' : 'ACTIVE SYSTEM TOOLCHAIN & RUNTIMES'}
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs font-mono">
                       {domain.technologies.map((tech) => (

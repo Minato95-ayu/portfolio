@@ -18,6 +18,7 @@ export interface TechCelestialBody {
   speed: number;
   size: number;
   inclination: number; // orbital tilt in radians
+  eccentricity?: number;
   hasRing?: boolean;
   ringColor?: number;
   moons?: TechMoon[];
@@ -54,7 +55,7 @@ export const AAYU_CORE_STAR: TechCelestialBody = {
   ],
 };
 
-export const TECH_GALAXY_BODIES: TechCelestialBody[] = [
+const CORE_TECH_GALAXY_BODIES: TechCelestialBody[] = [
   // --- INNER ORBIT: METAL & SYSTEM LANGUAGES ---
   {
     id: 'rust',
@@ -460,6 +461,203 @@ export const TECH_GALAXY_BODIES: TechCelestialBody[] = [
       { label: 'Used In', value: 'Cryptographic AI Verification' },
     ],
   },
+];
+
+type ExplorationBodyInput = Pick<
+  TechCelestialBody,
+  'id' | 'name' | 'symbol' | 'category' | 'color' | 'secondaryColor' | 'distance' | 'tag' | 'description'
+> & {
+  specs: TechCelestialBody['specs'];
+  mastery?: string;
+  role?: string;
+};
+
+const createExplorationBody = (body: ExplorationBodyInput): TechCelestialBody => ({
+  ...body,
+  hexColor: Number.parseInt(body.color.slice(1), 16),
+  speed: 0.12 / Math.sqrt(body.distance / 10),
+  size: 0.32,
+  inclination: ((body.distance * 7) % 12 - 6) * 0.025,
+  eccentricity: 0.025 + ((Math.round(body.distance * 10) * 7) % 5) * 0.015,
+  mastery: body.mastery ?? 'Exploration / Learning Focus',
+  role: body.role ?? `Learning track: ${body.tag}. This is an area of study, not a claim of a shipped specialist project.`,
+});
+
+const EXPLORATION_TECH_GALAXY_BODIES: TechCelestialBody[] = [
+  createExplorationBody({
+    id: 'javascript',
+    name: 'JavaScript',
+    symbol: 'JS',
+    category: 'LANGUAGE',
+    color: '#F7DF1E',
+    secondaryColor: '#D6A800',
+    distance: 16.7,
+    tag: 'Browser Runtime & Event-Driven Programming',
+    description: 'The JavaScript runtime, asynchronous programming, and browser APIs used in full-stack application development.',
+    mastery: 'Full-Stack Language',
+    role: 'Building interactive browser experiences and JavaScript-based application features.',
+    specs: [
+      { label: 'Focus', value: 'Async / Event Loop' },
+      { label: 'Environment', value: 'Browser / Node.js' },
+    ],
+  }),
+  createExplorationBody({
+    id: 'java',
+    name: 'Java',
+    symbol: '☕',
+    category: 'LANGUAGE',
+    color: '#F97316',
+    secondaryColor: '#38BDF8',
+    distance: 17.3,
+    tag: 'JVM & Object-Oriented Programming',
+    description: 'A learning track covering JVM execution, static typing, and object-oriented application design.',
+    specs: [
+      { label: 'Runtime', value: 'JVM Fundamentals' },
+      { label: 'Focus', value: 'Types / OOP' },
+    ],
+  }),
+  createExplorationBody({
+    id: 'bash',
+    name: 'Bash',
+    symbol: '$',
+    category: 'LANGUAGE',
+    color: '#4ADE80',
+    secondaryColor: '#166534',
+    distance: 18.0,
+    tag: 'Shell Scripting & Linux Automation',
+    description: 'A learning track covering shell scripting, command pipelines, and practical Linux automation.',
+    specs: [
+      { label: 'Focus', value: 'Shell / Pipelines' },
+      { label: 'Environment', value: 'Linux / POSIX' },
+    ],
+  }),
+  createExplorationBody({
+    id: 'sql',
+    name: 'SQL',
+    symbol: 'DB',
+    category: 'LANGUAGE',
+    color: '#38BDF8',
+    secondaryColor: '#1D4ED8',
+    distance: 18.7,
+    tag: 'Relational Data & Query Design',
+    description: 'A learning track covering relational modeling, joins, transactions, and query fundamentals.',
+    specs: [
+      { label: 'Focus', value: 'Queries / Joins' },
+      { label: 'Concepts', value: 'Schema / Transactions' },
+    ],
+  }),
+  createExplorationBody({
+    id: 'assembly',
+    name: 'Assembly',
+    symbol: 'ASM',
+    category: 'LANGUAGE',
+    color: '#A78BFA',
+    secondaryColor: '#4C1D95',
+    distance: 19.4,
+    tag: 'Instruction Sets & Machine-Level Execution',
+    description: 'A learning track connecting compiler output to registers, calling conventions, and CPU instructions.',
+    mastery: 'Systems Programming Language',
+    role: 'Working close to compiler output, CPU instructions, registers, and calling conventions.',
+    specs: [
+      { label: 'Focus', value: 'Registers / Instructions' },
+      { label: 'Concepts', value: 'ABI / Calling Conventions' },
+    ],
+  }),
+  createExplorationBody({
+    id: 'systems-mathematics',
+    name: 'Systems Mathematics',
+    symbol: '∑',
+    category: 'SYSTEMS',
+    color: '#C6FF3D',
+    secondaryColor: '#0EA5E9',
+    distance: 20.1,
+    tag: 'Linear Algebra · Probability · Discrete Math',
+    description: 'A study map for the mathematics behind algorithms and computing: vectors and matrices, probability, graph theory, optimization, and asymptotic complexity.',
+    specs: [
+      { label: 'Topics', value: 'Linear Algebra / Probability' },
+      { label: 'Applications', value: 'Graphs / Optimization' },
+    ],
+  }),
+  createExplorationBody({
+    id: 'os-internals',
+    name: 'OS Internals',
+    symbol: 'OS',
+    category: 'SYSTEMS',
+    color: '#F59E0B',
+    secondaryColor: '#B45309',
+    distance: 20.8,
+    tag: 'Processes · Virtual Memory · System Calls',
+    description: 'A learning track for operating-system fundamentals, including process scheduling, virtual memory, filesystems, and the syscall boundary.',
+    specs: [
+      { label: 'Topics', value: 'Processes / Virtual Memory' },
+      { label: 'Interface', value: 'POSIX / System Calls' },
+    ],
+  }),
+  createExplorationBody({
+    id: 'networking',
+    name: 'Networking',
+    symbol: 'NET',
+    category: 'SYSTEMS',
+    color: '#22D3EE',
+    secondaryColor: '#2563EB',
+    distance: 21.5,
+    tag: 'TCP/IP · DNS · HTTP · TLS',
+    description: 'A learning track for network fundamentals, protocol behavior, service communication, and network troubleshooting.',
+    specs: [
+      { label: 'Protocols', value: 'TCP/IP / DNS / HTTP' },
+      { label: 'Security', value: 'TLS Fundamentals' },
+    ],
+  }),
+  createExplorationBody({
+    id: 'ethical-security',
+    name: 'Ethical Security',
+    symbol: 'DEF',
+    category: 'SYSTEMS',
+    color: '#FB7185',
+    secondaryColor: '#7F1D1D',
+    distance: 22.2,
+    tag: 'Defensive Testing · Threat Modeling · Secure Coding',
+    description: 'An authorized, defensive security learning track focused on threat modeling, safe lab testing, secure coding, and vulnerability remediation.',
+    specs: [
+      { label: 'Scope', value: 'Authorized Lab Testing' },
+      { label: 'Methods', value: 'Threat Models / Remediation' },
+    ],
+  }),
+  createExplorationBody({
+    id: 'llm-systems',
+    name: 'LLM Systems',
+    symbol: 'LLM',
+    category: 'AI_MODEL',
+    color: '#818CF8',
+    secondaryColor: '#38BDF8',
+    distance: 22.9,
+    tag: 'Inference · RAG · Evaluation · Guardrails',
+    description: 'A learning track for the engineering around language models: inference, retrieval-augmented generation, evaluation, and responsible guardrails.',
+    specs: [
+      { label: 'Pipelines', value: 'Inference / RAG' },
+      { label: 'Reliability', value: 'Evaluation / Guardrails' },
+    ],
+  }),
+  createExplorationBody({
+    id: 'blockchain-systems',
+    name: 'Blockchain Systems',
+    symbol: '⛓',
+    category: 'SYSTEMS',
+    color: '#A855F7',
+    secondaryColor: '#F59E0B',
+    distance: 23.6,
+    tag: 'Distributed Ledgers · Consensus · Smart-Contract Safety',
+    description: 'A learning track exploring distributed-ledger fundamentals, consensus trade-offs, and the security properties of smart contracts.',
+    specs: [
+      { label: 'Topics', value: 'Consensus / Distributed State' },
+      { label: 'Safety', value: 'Contract Invariants' },
+    ],
+  }),
+];
+
+export const TECH_GALAXY_BODIES: TechCelestialBody[] = [
+  ...CORE_TECH_GALAXY_BODIES,
+  ...EXPLORATION_TECH_GALAXY_BODIES,
 ];
 
 export const CATEGORY_COLORS: Record<TechCategory, string> = {

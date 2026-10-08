@@ -45,7 +45,7 @@ export const TechGalaxySection: React.FC<TechGalaxySectionProps> = ({
             <span className="w-2.5 h-2.5 rounded-full bg-[#C6FF3D] animate-ping shrink-0" />
             <span className="font-bold tracking-wider shrink-0">ASTRONOMICAL MATRIX / 000</span>
             <span className="text-white/20">|</span>
-            <span className="text-white/60 truncate">TECH LANGUAGES · AI MODELS · METAL SYSTEMS</span>
+            <span className="text-white/60 truncate">LANGUAGES · AI MODELS · OS · NETWORKS · SECURITY</span>
           </div>
 
           {onOpenFullscreenGalaxy && (
@@ -68,7 +68,10 @@ export const TechGalaxySection: React.FC<TechGalaxySectionProps> = ({
         </h2>
 
         <p className="text-base text-white/70 max-w-3xl leading-relaxed">
-          A physical astronomical map of the programming languages, foundational AI models, systems infrastructure, and compiler frameworks driving Ayush Kaushik's engineering. All bodies gravitationally orbit the central <strong>AAYU Core</strong> star.
+          An interactive, physics-inspired map of programming languages, AI, mathematics, operating systems, networking, and security. Orbits and planet surfaces are illustrative—not to astronomical scale. New learning tracks are labeled clearly.
+        </p>
+        <p className="text-[11px] font-mono text-white/40">
+          EXPLORATION / LEARNING FOCUS = study areas, not claims of shipped specialist projects.
         </p>
 
         {/* Category Filter Tabs */}
@@ -147,7 +150,7 @@ export const TechGalaxySection: React.FC<TechGalaxySectionProps> = ({
               </div>
 
               <div className="text-right font-mono text-xs text-[#C6FF3D] hidden md:block shrink-0">
-                <span>R=0.0 AU</span>
+                <span>R=0.0</span>
                 <div className="text-[10px] text-white/40">SUN MESH</div>
               </div>
             </div>
@@ -182,7 +185,7 @@ export const TechGalaxySection: React.FC<TechGalaxySectionProps> = ({
                     </div>
 
                     <div className="text-[10px] font-mono text-white/40 text-right">
-                      {body.distance.toFixed(1)} AU
+                      ORBIT {body.distance.toFixed(1)}
                     </div>
                   </div>
 

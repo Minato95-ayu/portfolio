@@ -12,6 +12,58 @@ import { sound } from '../../utils/audio.ts';
 
 export type GalaxyViewMode = 'SOLAR_SYSTEM' | 'SPIRAL_GALAXY' | 'ORRERY_3D';
 
+const createSurfaceTexture = (body: TechCelestialBody) => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 128;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+
+  const image = context.createImageData(canvas.width, canvas.height);
+  const primary = new THREE.Color(body.color);
+  const secondary = new THREE.Color(body.secondaryColor ?? body.color);
+  const seed = body.id.split('').reduce((value, character) => value + character.charCodeAt(0), 0);
+
+  for (let y = 0; y < canvas.height; y += 1) {
+    const latitude = y / canvas.height;
+    for (let x = 0; x < canvas.width; x += 1) {
+      const longitude = x / canvas.width;
+      const band = Math.sin(latitude * Math.PI * 30 + Math.sin(longitude * 15 + seed) * 0.55);
+      const continent =
+        Math.sin(longitude * 24 + Math.sin(latitude * 17 + seed) * 2.1) *
+        Math.cos(latitude * 22 + Math.sin(longitude * 11 + seed) * 1.7);
+      const grain = Math.sin(x * 12.9898 + y * 78.233 + seed * 0.37);
+      const variation =
+        body.category === 'AI_MODEL'
+          ? 0.48 + band * 0.22 + continent * 0.1
+          : 0.42 + continent * 0.3 + grain * 0.1;
+      const shading = 0.78 + Math.sin(latitude * Math.PI) * 0.2;
+      const blend = Math.max(0, Math.min(1, variation));
+      const pixel = (y * canvas.width + x) * 4;
+
+      image.data[pixel] = (primary.r * (1 - blend) + secondary.r * blend) * 255 * shading;
+      image.data[pixel + 1] = (primary.g * (1 - blend) + secondary.g * blend) * 255 * shading;
+      image.data[pixel + 2] = (primary.b * (1 - blend) + secondary.b * blend) * 255 * shading;
+      image.data[pixel + 3] = 255;
+    }
+  }
+
+  context.putImageData(image, 0, 0);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+};
+
+const solveEccentricAnomaly = (meanAnomaly: number, eccentricity: number) => {
+  let eccentricAnomaly = meanAnomaly;
+  for (let iteration = 0; iteration < 5; iteration += 1) {
+    eccentricAnomaly -=
+      (eccentricAnomaly - eccentricity * Math.sin(eccentricAnomaly) - meanAnomaly) /
+      (1 - eccentricity * Math.cos(eccentricAnomaly));
+  }
+  return eccentricAnomaly;
+};
+
 interface TechGalaxySolarSystemSceneProps {
   reducedMotion?: boolean;
   activeSection?: string;
@@ -73,10 +125,12 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
         orbitLine: THREE.Line;
         data: TechCelestialBody;
         angle: number;
+        eccentricity: number;
         moons: { mesh: THREE.Mesh; dist: number; speed: number; angle: number }[];
       }
     >
   >(new Map());
+  const surfaceTexturesRef = useRef<THREE.CanvasTexture[]>([]);
 
   const viewModeRef = useRef<GalaxyViewMode>('SOLAR_SYSTEM');
   viewModeRef.current = viewMode;
@@ -89,6 +143,10 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
 
   const scrollRef = useRef({ progress: 0, targetProgress: 0 });
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+
+  useEffect(() => {
+    if (isInteractiveMode) targetCameraDistance.current = 30;
+  }, [isInteractiveMode]);
 
   // Helper to generate crisp billboard labels with tech symbol and category color
   const createLabelSprite = (text: string, symbol: string, colorHex: string): THREE.Sprite => {
@@ -176,6 +234,9 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     });
     renderer.setClearColor(0x080a0e, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
     renderer.setSize(width, height);
     rendererRef.current = renderer;
 
@@ -191,12 +252,21 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
 
     // Glowing Sun Sphere
     const sunGeom = new THREE.SphereGeometry(AAYU_CORE_STAR.size, 32, 32);
+    const sunTexture = createSurfaceTexture({
+      ...AAYU_CORE_STAR,
+      color: '#D8FF62',
+      secondaryColor: '#FFB347',
+      category: 'AI_MODEL',
+    });
+    if (sunTexture) surfaceTexturesRef.current.push(sunTexture);
     const sunMat = new THREE.MeshStandardMaterial({
-      color: 0x11161d,
+      color: 0xffffff,
       emissive: 0xc6ff3d,
-      emissiveIntensity: 0.95,
-      roughness: 0.15,
-      metalness: 0.85,
+      emissiveMap: sunTexture,
+      emissiveIntensity: 1.2,
+      map: sunTexture,
+      roughness: 0.8,
+      metalness: 0.05,
     });
     const sunMesh = new THREE.Mesh(sunGeom, sunMat);
     sunMesh.userData = { id: AAYU_CORE_STAR.id, isSun: true };
@@ -225,7 +295,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       const coronaMat = new THREE.MeshBasicMaterial({
         color: r === 0 ? 0xc6ff3d : r === 1 ? 0x4cc9f0 : 0x8b5cf6,
         transparent: true,
-        opacity: 0.55 - r * 0.12,
+        opacity: 0.2 - r * 0.04,
       });
       const ringMesh = new THREE.Mesh(coronaGeom, coronaMat);
       ringMesh.rotation.x = (Math.PI / 3) * (r + 1);
@@ -240,11 +310,11 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     sunGroup.add(sunSprite);
 
     // Central Sun Light
-    const sunLight = new THREE.PointLight(0xc6ff3d, 4.0, 35, 1.2);
+    const sunLight = new THREE.PointLight(0xffe2a3, 5.5, 50, 1.35);
     sunLight.position.set(0, 0, 0);
     sunGroup.add(sunLight);
 
-    const sunSecondaryLight = new THREE.PointLight(0x4cc9f0, 2.5, 25, 1.5);
+    const sunSecondaryLight = new THREE.PointLight(0x4cc9f0, 0.35, 25, 1.5);
     sunGroup.add(sunSecondaryLight);
 
     // ==========================================
@@ -259,6 +329,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
         orbitLine: THREE.Line;
         data: TechCelestialBody;
         angle: number;
+        eccentricity: number;
         moons: { mesh: THREE.Mesh; dist: number; speed: number; angle: number }[];
       }
     >();
@@ -270,11 +341,15 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       // 1. Orbit Path Ellipse / Circle
       const orbitPoints: THREE.Vector3[] = [];
       const segments = 120;
+      const eccentricity = body.eccentricity ?? 0.025 + ((idx * 7) % 5) * 0.015;
       for (let i = 0; i <= segments; i++) {
         const theta = (i / segments) * Math.PI * 2;
-        const x = Math.cos(theta) * body.distance;
-        const z = Math.sin(theta) * body.distance;
-        const y = Math.sin(theta) * Math.sin(body.inclination) * 1.5;
+        const eccentricAnomaly = solveEccentricAnomaly(theta, eccentricity);
+        const x = body.distance * (Math.cos(eccentricAnomaly) - eccentricity);
+        const orbitDepth =
+          body.distance * Math.sqrt(1 - eccentricity * eccentricity) * Math.sin(eccentricAnomaly);
+        const z = orbitDepth * Math.cos(body.inclination);
+        const y = orbitDepth * Math.sin(body.inclination);
         orbitPoints.push(new THREE.Vector3(x, y, z));
       }
       const orbitGeom = new THREE.BufferGeometry().setFromPoints(orbitPoints);
@@ -287,15 +362,21 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       worldGroup.add(orbitLine);
 
       // 2. Planet Mesh Sphere
-      const planetGeom = new THREE.SphereGeometry(body.size, 24, 24);
+      const planetGeom = new THREE.SphereGeometry(body.size, 40, 40);
+      const surfaceTexture = createSurfaceTexture(body);
+      if (surfaceTexture) surfaceTexturesRef.current.push(surfaceTexture);
       const planetMat = new THREE.MeshStandardMaterial({
-        color: body.hexColor,
+        color: 0xffffff,
+        map: surfaceTexture,
+        bumpMap: surfaceTexture,
+        bumpScale: 0.035,
         emissive: body.hexColor,
-        emissiveIntensity: 0.45,
-        roughness: 0.35,
-        metalness: 0.65,
+        emissiveIntensity: 0.025,
+        roughness: body.category === 'AI_MODEL' ? 0.62 : 0.86,
+        metalness: 0.06,
       });
       const planetMesh = new THREE.Mesh(planetGeom, planetMat);
+      planetMesh.rotation.z = 0.18 + body.inclination;
       planetMesh.userData = { id: body.id, isPlanet: true };
       bodyGroup.add(planetMesh);
 
@@ -317,13 +398,13 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       const moonsList: { mesh: THREE.Mesh; dist: number; speed: number; angle: number }[] = [];
       if (body.moons && body.moons.length > 0) {
         body.moons.forEach((m, mIdx) => {
-          const moonGeom = new THREE.OctahedronGeometry(body.size * 0.22, 0);
+          const moonGeom = new THREE.SphereGeometry(body.size * 0.16, 12, 10);
           const moonMat = new THREE.MeshStandardMaterial({
             color: new THREE.Color(m.color).getHex(),
             emissive: new THREE.Color(m.color).getHex(),
-            emissiveIntensity: 0.6,
-            roughness: 0.3,
-            metalness: 0.7,
+            emissiveIntensity: 0.08,
+            roughness: 0.82,
+            metalness: 0.04,
           });
           const moonMesh = new THREE.Mesh(moonGeom, moonMat);
           bodyGroup.add(moonMesh);
@@ -351,6 +432,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
         orbitLine,
         data: body,
         angle: initialAngle,
+        eccentricity,
         moons: moonsList,
       });
     });
@@ -404,10 +486,10 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     worldGroup.add(starField);
 
     // Ambient and directional lighting for planet 3D depth
-    const ambientLight = new THREE.AmbientLight(0x0c1119, 1.8);
+    const ambientLight = new THREE.AmbientLight(0x1c2734, 0.55);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.16);
     dirLight.position.set(10, 20, 15);
     scene.add(dirLight);
 
@@ -464,7 +546,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       // Zoom in / out with boundaries
       targetCameraDistance.current = Math.max(
         5,
-        Math.min(32, targetCameraDistance.current + e.deltaY * 0.015)
+        Math.min(40, targetCameraDistance.current + e.deltaY * 0.015)
       );
     };
 
@@ -585,10 +667,15 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
         let posZ = 0;
 
         if (curMode === 'SOLAR_SYSTEM') {
-          // Standard Keplerian concentric orbits
-          posX = Math.cos(entry.angle) * body.distance;
-          posZ = Math.sin(entry.angle) * body.distance;
-          posY = Math.sin(entry.angle) * Math.sin(body.inclination) * 1.5;
+          // Solve Kepler's equation so elliptical orbits move faster near periapsis.
+          const eccentricAnomaly = solveEccentricAnomaly(entry.angle, entry.eccentricity);
+          posX = body.distance * (Math.cos(eccentricAnomaly) - entry.eccentricity);
+          const orbitDepth =
+            body.distance *
+            Math.sqrt(1 - entry.eccentricity * entry.eccentricity) *
+            Math.sin(eccentricAnomaly);
+          posY = orbitDepth * Math.sin(body.inclination);
+          posZ = orbitDepth * Math.cos(body.inclination);
         } else if (curMode === 'SPIRAL_GALAXY') {
           // Logarithmic spiral galaxy dispersion
           const spiralTheta = entry.angle + body.distance * 0.28;
@@ -629,7 +716,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
         entry.sprite.material.opacity = targetOpacity;
         (entry.orbitLine.material as THREE.LineBasicMaterial).opacity = lineOpacity;
         (entry.planetMesh.material as THREE.MeshStandardMaterial).emissiveIntensity =
-          isSelectedCategory ? 0.6 : 0.1;
+          isSelectedCategory ? 0.04 : 0.01;
       });
 
       // 4. Galaxy Dust Rotation
@@ -712,6 +799,8 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       sunMat.dispose();
       sunInnerGeom.dispose();
       sunInnerMat.dispose();
+      surfaceTexturesRef.current.forEach((texture) => texture.dispose());
+      surfaceTexturesRef.current = [];
       starGeom.dispose();
       starMat.dispose();
       renderer.dispose();
@@ -730,7 +819,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     sound.playClick();
     setCameraFocusedOnBody(null);
     targetUserRotation.current = { x: 0.28, y: 0 };
-    targetCameraDistance.current = 15;
+    targetCameraDistance.current = 30;
   };
 
   return (

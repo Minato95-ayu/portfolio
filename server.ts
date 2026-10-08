@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { z } from 'zod';
 import { ALL_PROJECTS, PROFILE_DATA } from './src/data/projectsData.ts';
 import { AWESOME_FREE_LLM_PROVIDERS } from './src/data/freeLlmApis.ts';
 
@@ -14,9 +13,6 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(express.json());
-
-// In-memory rate limiting map for contact form
-const contactRateLimits = new Map<string, number>();
 
 // --- API Endpoints ---
 
@@ -58,15 +54,6 @@ app.get('/api/projects/:slug', (req: Request, res: Response) => {
     return;
   }
   res.json({ project });
-});
-
-// Zod schema for contact request
-const ContactSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
-  email: z.string().email('Invalid email address'),
-  interest: z.string().min(1, 'Please select an area of interest').max(100),
-  message: z.string().min(10, 'Message must be at least 10 characters').max(2000),
-  _gotcha: z.string().optional(), // Honeypot field
 });
 
 // GET /api/free-llms
@@ -253,48 +240,6 @@ Rules:
   }
 
   res.json({ reply, source: 'knowledge-engine' });
-});
-
-// POST /api/contact
-app.post('/api/contact', (req: Request, res: Response) => {
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
-  const now = Date.now();
-  const lastRequest = contactRateLimits.get(clientIp);
-
-  // Rate limit: 1 request every 15 seconds per IP
-  if (lastRequest && now - lastRequest < 15000) {
-    res.status(429).json({
-      error: 'Too many requests. Please wait a few seconds before dispatching another message.',
-    });
-    return;
-  }
-
-  const parsed = ContactSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({
-      error: 'Validation failed',
-      details: parsed.error.issues.map((i) => ({ field: i.path.join('.'), message: i.message })),
-    });
-    return;
-  }
-
-  // Honeypot check
-  if (parsed.data._gotcha && parsed.data._gotcha.trim().length > 0) {
-    // Silently acknowledge bots without processing
-    res.json({ success: true, message: 'Message logged.' });
-    return;
-  }
-
-  contactRateLimits.set(clientIp, now);
-
-  // Log contact submission cleanly
-  console.log(`[CONTACT RECEIVED] From: ${parsed.data.name} <${parsed.data.email}> | Focus: ${parsed.data.interest}`);
-
-  res.json({
-    success: true,
-    message: 'Message registered successfully. Direct backup: ayushkaushik1441@gmail.com',
-    receivedAt: new Date().toISOString(),
-  });
 });
 
 // --- Vite Dev Server Middleware or Static Production Serving ---

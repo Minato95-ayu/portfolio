@@ -18,11 +18,16 @@ export const ConnectSection: React.FC = () => {
     email: '',
     interest: 'Brain-Inspired AI Architecture',
     message: '',
-    _gotcha: '',
   });
 
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [feedbackMsg, setFeedbackMsg] = useState<string>('');
+
+  const mailtoLink = `mailto:${PROFILE_DATA.links.email}?subject=${encodeURIComponent(
+    `[AAYU Inquiry] ${formData.interest}`
+  )}&body=${encodeURIComponent(
+    `Name: ${formData.name}\nEmail: ${formData.email}\nFocus: ${formData.interest}\n\n${formData.message}`
+  )}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,45 +35,52 @@ export const ConnectSection: React.FC = () => {
     setStatus('sending');
     setFeedbackMsg('');
 
+    const submission = new URLSearchParams({
+      name: formData.name,
+      email: formData.email,
+      interest: formData.interest,
+      message: formData.message,
+      _subject: `[Portfolio Inquiry] ${formData.interest}`,
+      _template: 'table',
+    });
+
     try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        `https://formsubmit.co/ajax/${encodeURIComponent(PROFILE_DATA.links.email)}`,
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          },
+          body: submission.toString(),
+        }
+      );
+      const result: { success?: boolean | string; message?: string } = await response.json();
 
-      const data = await res.json();
-
-      if (res.ok && data.success) {
+      if (response.ok && (result.success === true || result.success === 'true')) {
         setStatus('success');
-        setFeedbackMsg(data.message || 'Transmission received. Direct backup: ayushkaushik1441@gmail.com');
+        setFeedbackMsg(
+          result.message ||
+            'Message accepted by the email relay. If this is the first submission, activate the form from the email sent to the recipient inbox.'
+        );
         setFormData({
           name: '',
           email: '',
           interest: 'Brain-Inspired AI Architecture',
           message: '',
-          _gotcha: '',
         });
-      } else {
-        setStatus('error');
-        setFeedbackMsg(
-          data.error ||
-            'Transmission failed. You can reach out directly via ayushkaushik1441@gmail.com'
-        );
+        return;
       }
-    } catch {
-      // Fallback if network or offline
+
       setStatus('error');
       setFeedbackMsg(
-        'Backend console unreachable. Redirecting your message to direct client mailto...'
+        result.message ||
+          'The email relay did not accept this message. Use the direct email option below.'
       );
-      // Trigger native mailto fallback safely
-      const mailtoLink = `mailto:${PROFILE_DATA.links.email}?subject=${encodeURIComponent(
-        `[AAYU Inquiry] ${formData.interest}`
-      )}&body=${encodeURIComponent(
-        `Name: ${formData.name}\nEmail: ${formData.email}\nFocus: ${formData.interest}\n\n${formData.message}`
-      )}`;
-      window.location.href = mailtoLink;
+    } catch {
+      setStatus('error');
+      setFeedbackMsg('The email relay could not be reached. Use the direct email option below.');
     }
   };
 
@@ -214,20 +226,12 @@ export const ConnectSection: React.FC = () => {
             className="bg-[#0c1017]/95 border border-white/10 p-6 sm:p-8 rounded-sm space-y-6"
           >
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <span className="text-xs font-mono text-[#84cc16]">TRANSMISSION PROTOCOL / REST API</span>
-              <span className="text-[10px] font-mono text-white/40">ZOD VALIDATED</span>
+              <span className="text-xs font-mono text-[#84cc16]">FREE EMAIL RELAY / NO API KEY</span>
+              <span className="text-[10px] font-mono text-white/40">FIRST-USE ACTIVATION REQUIRED</span>
             </div>
-
-            {/* Honeypot field for bot protection */}
-            <input
-              type="text"
-              name="_gotcha"
-              tabIndex={-1}
-              autoComplete="off"
-              value={formData._gotcha}
-              onChange={(e) => setFormData({ ...formData, _gotcha: e.target.value })}
-              className="hidden"
-            />
+            <p className="text-[11px] font-mono leading-relaxed text-white/45">
+              Messages pass through FormSubmit before reaching the inbox. On first use, check the recipient inbox and confirm the activation email. Do not send sensitive information.
+            </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -293,19 +297,24 @@ export const ConnectSection: React.FC = () => {
 
             {/* Status Feedback */}
             {status === 'success' && (
-              <div className="p-3 bg-[#84cc16]/10 border border-[#84cc16] text-[#84cc16] text-xs font-mono rounded">
+              <div className="p-3 bg-[#84cc16]/10 border border-[#84cc16] text-[#84cc16] text-xs font-mono rounded" aria-live="polite">
                 ✓ {feedbackMsg}
               </div>
             )}
             {status === 'error' && (
-              <div className="p-3 bg-red-500/10 border border-red-500 text-red-400 text-xs font-mono rounded">
-                ⚠ {feedbackMsg}
+              <div className="p-3 bg-red-500/10 border border-red-500 text-red-400 text-xs font-mono rounded" aria-live="polite">
+                ⚠ {feedbackMsg}{' '}
+                <a href={mailtoLink} className="underline underline-offset-2">
+                  OPEN EMAIL APP →
+                </a>
               </div>
             )}
-
             <div className="flex items-center justify-between pt-2">
               <div className="text-[11px] font-mono text-white/40">
-                DIRECT BACKUP: {PROFILE_DATA.links.email}
+                RECIPIENT: {PROFILE_DATA.links.email} ·{' '}
+                <a href={mailtoLink} className="text-[#84cc16] hover:underline">
+                  DIRECT EMAIL
+                </a>
               </div>
 
               <button
@@ -313,7 +322,7 @@ export const ConnectSection: React.FC = () => {
                 disabled={status === 'sending'}
                 className="px-6 py-2.5 bg-[#C6FF3D] hover:bg-[#d6ff66] text-[#0B0D10] font-mono text-xs font-bold rounded transition-all disabled:opacity-50 cursor-pointer shadow-[0_0_15px_rgba(198,255,61,0.3)]"
               >
-                {status === 'sending' ? 'DISPATCHING...' : 'DISPATCH MESSAGE →'}
+                {status === 'sending' ? 'SENDING...' : 'DISPATCH MESSAGE →'}
               </button>
             </div>
           </form>

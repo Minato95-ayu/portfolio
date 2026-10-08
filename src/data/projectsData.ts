@@ -44,6 +44,11 @@ export const PROFILE_DATA = {
     'AI security & cryptographic AI',
     'Web3 security',
     'Systems engineering & automation',
+    'Systems mathematics: linear algebra, probability, graph theory, and optimization',
+    'Operating-system and networking fundamentals',
+    'Ethical cybersecurity and defensive testing',
+    'LLM inference, retrieval, and evaluation systems',
+    'Blockchain protocols and smart-contract security',
   ],
   technologies: [
     'Python',
