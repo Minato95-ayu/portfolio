@@ -45,6 +45,7 @@ interface NeuralChessProps {
 
 export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
   const botTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const BOT_MOVE_DELAY_MS = 180;
   const [position, setPosition] = useState<string>(getInitialPosition);
   const [history, setHistory] = useState<{ position: string; move: Move }[]>([]);
   const [selectedSquare, setSelectedSquare] = useState<[number, number] | null>(null);
@@ -71,6 +72,13 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
     .filter(({ move }) => move.captured?.color === 'w')
     .reduce((points, { move }) => points + (move.captured ? PIECE_POINTS[move.captured.type] : 0), 0);
 
+  const effectiveBotDepth = useCallback((level: number) => {
+    if (typeof navigator !== 'undefined' && navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) {
+      return Math.min(level, 2);
+    }
+    return level;
+  }, []);
+
   // Execute AI Bot move
   const triggerBotMove = useCallback((currentPosition: string) => {
     setIsBotThinking(true);
@@ -78,7 +86,7 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
 
     botTimer.current = setTimeout(() => {
       botTimer.current = null;
-      const result = findBestMove(currentPosition, 'b', difficulty);
+      const result = findBestMove(currentPosition, 'b', effectiveBotDepth(difficulty));
       if (result) {
         const bestMove = result.move;
         if (bestMove.captured) {
@@ -106,8 +114,8 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
         setIsBotThinking(false);
         setStatusMessage('No legal move is available. The game has ended.');
       }
-    }, 450);
-  }, [difficulty, priorPositions]);
+    }, BOT_MOVE_DELAY_MS);
+  }, [difficulty, effectiveBotDepth, priorPositions]);
 
   useEffect(() => () => {
     if (botTimer.current) clearTimeout(botTimer.current);

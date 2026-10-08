@@ -142,7 +142,8 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
   orbitSpeedRef.current = isPaused ? 0 : orbitSpeedMultiplier;
 
   const scrollRef = useRef({ progress: 0, targetProgress: 0 });
-  const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+  const pointerNeedsRaycastRef = useRef(false);
+  const hoveredBodyRef = useRef<TechCelestialBody | null>(null);
 
   useEffect(() => {
     if (isInteractiveMode) targetCameraDistance.current = 30;
@@ -213,6 +214,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     const container = containerRef.current;
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
+    const lowPowerDevice = (navigator.hardwareConcurrency || 8) <= 4;
 
     // --- Scene Setup ---
     const scene = new THREE.Scene();
@@ -228,12 +230,13 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
 
     const renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: !lowPowerDevice,
       alpha: true,
-      powerPreference: 'high-performance',
+      powerPreference: lowPowerDevice ? 'low-power' : 'high-performance',
     });
     renderer.setClearColor(0x080a0e, 0);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    const maxPixelRatio = lowPowerDevice ? 1 : 1.5;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
@@ -362,7 +365,8 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       worldGroup.add(orbitLine);
 
       // 2. Planet Mesh Sphere
-      const planetGeom = new THREE.SphereGeometry(body.size, 40, 40);
+      const planetSegments = lowPowerDevice ? 20 : 40;
+      const planetGeom = new THREE.SphereGeometry(body.size, planetSegments, planetSegments);
       const surfaceTexture = createSurfaceTexture(body);
       if (surfaceTexture) surfaceTexturesRef.current.push(surfaceTexture);
       const planetMat = new THREE.MeshStandardMaterial({
@@ -442,7 +446,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     // ==========================================
     // 3. COSMIC STELLAR GALAXY FIELD (2,000 STARS)
     // ==========================================
-    const starCount = 2000;
+    const starCount = lowPowerDevice ? 900 : 2000;
     const starGeom = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
@@ -499,25 +503,31 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     const raycaster = new THREE.Raycaster();
     const mousePointer = new THREE.Vector2();
 
-    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
-      if (!isInteractiveRef.current) return;
-      isDraggingRef.current = true;
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-      previousMousePosition.current = { x: clientX, y: clientY };
+    const updatePointerPosition = (clientX: number, clientY: number) => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      mousePointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      mousePointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      pointerNeedsRaycastRef.current = true;
     };
 
-    const handlePointerMove = (e: MouseEvent | TouchEvent) => {
+    const handlePointerDown = (e: PointerEvent) => {
+      if (!isInteractiveRef.current) return;
+      if (e.button !== 0) return;
+      isDraggingRef.current = true;
+      previousMousePosition.current = { x: e.clientX, y: e.clientY };
+      canvas.setPointerCapture(e.pointerId);
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
       if (!isInteractiveRef.current) {
         if (isDraggingRef.current) isDraggingRef.current = false;
         return;
       }
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
 
       if (isDraggingRef.current) {
-        const deltaX = clientX - previousMousePosition.current.x;
-        const deltaY = clientY - previousMousePosition.current.y;
+        const deltaX = e.clientX - previousMousePosition.current.x;
+        const deltaY = e.clientY - previousMousePosition.current.y;
 
         targetUserRotation.current.y += deltaX * 0.005;
         targetUserRotation.current.x = Math.max(
@@ -525,28 +535,32 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
           Math.min(Math.PI / 2.5, targetUserRotation.current.x + deltaY * 0.005)
         );
 
-        previousMousePosition.current = { x: clientX, y: clientY };
+        previousMousePosition.current = { x: e.clientX, y: e.clientY };
       }
 
-      // Raycast pointer coordinates
-      const rect = canvas.getBoundingClientRect();
-      mousePointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-      mousePointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
-      mouseRef.current.targetX = (clientX / window.innerWidth) * 2 - 1;
-      mouseRef.current.targetY = -(clientY / window.innerHeight) * 2 + 1;
+      updatePointerPosition(e.clientX, e.clientY);
     };
 
     const handlePointerUp = () => {
       isDraggingRef.current = false;
     };
 
+    const handlePointerLeave = () => {
+      if (!isDraggingRef.current) {
+        pointerNeedsRaycastRef.current = false;
+        if (hoveredBodyRef.current) {
+          hoveredBodyRef.current = null;
+          setHoveredBody(null);
+        }
+      }
+    };
+
     const handleWheel = (e: WheelEvent) => {
       if (!isInteractiveRef.current) return;
-      if (e.target instanceof HTMLElement && e.target.closest('[data-no-zoom]')) return;
+      if (e.target instanceof Element && e.target.closest('[data-no-zoom]')) return;
       e.preventDefault();
       targetCameraDistance.current = Math.max(
-        5,
+        2,
         Math.min(40, targetCameraDistance.current + e.deltaY * 0.02)
       );
     };
@@ -594,17 +608,14 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     };
 
     // Window Listeners
-    canvas.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('mousemove', handlePointerMove, { passive: true });
-    window.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('pointerdown', handlePointerDown);
+    canvas.addEventListener('pointermove', handlePointerMove);
+    canvas.addEventListener('pointerup', handlePointerUp);
+    canvas.addEventListener('pointercancel', handlePointerUp);
+    canvas.addEventListener('pointerleave', handlePointerLeave);
     canvas.addEventListener('click', handleClick);
     container.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('scroll', handleScroll, { passive: true });
-
-    // Touch support
-    canvas.addEventListener('touchstart', handlePointerDown, { passive: true });
-    window.addEventListener('touchmove', handlePointerMove, { passive: true });
-    window.addEventListener('touchend', handlePointerUp);
 
     // Resize Handler
     const handleResize = () => {
@@ -614,7 +625,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       camera.aspect = nw / nh;
       camera.updateProjectionMatrix();
       renderer.setSize(nw, nh);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
     };
     window.addEventListener('resize', handleResize);
 
@@ -744,7 +755,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       // Compute camera position using spherical coordinates based on userRotation
       const phi = userRotation.current.x; // pitch
       const theta = userRotation.current.y; // yaw
-      const dist = cameraFocusedOnBody ? Math.min(cameraDistance.current, 6.5) : cameraDistance.current;
+      const dist = cameraDistance.current;
 
       const camX = currentCameraTarget.current.x + dist * Math.cos(phi) * Math.sin(theta);
       const camY = currentCameraTarget.current.y + dist * Math.sin(phi);
@@ -754,25 +765,29 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       camera.lookAt(currentCameraTarget.current);
 
       // 6. Raycast Hover Check (only if in interactive mode)
-      if (isInteractiveRef.current) {
+      if (isInteractiveRef.current && pointerNeedsRaycastRef.current) {
+        pointerNeedsRaycastRef.current = false;
         raycaster.setFromCamera(mousePointer, camera);
         const testObjects: THREE.Object3D[] = [sunMesh];
         planetMap.forEach((e) => testObjects.push(e.planetMesh));
 
         const hoverIntersects = raycaster.intersectObjects(testObjects);
+        let nextHoveredBody: TechCelestialBody | null = null;
         if (hoverIntersects.length > 0) {
           const hit = hoverIntersects[0].object;
           const id = hit.userData.id as string;
           if (id === AAYU_CORE_STAR.id) {
-            setHoveredBody(AAYU_CORE_STAR);
+            nextHoveredBody = AAYU_CORE_STAR;
           } else {
-            const found = TECH_GALAXY_BODIES.find((b) => b.id === id);
-            if (found) setHoveredBody(found);
+            nextHoveredBody = TECH_GALAXY_BODIES.find((b) => b.id === id) ?? null;
           }
-        } else {
-          setHoveredBody(null);
         }
-      } else {
+        if (hoveredBodyRef.current !== nextHoveredBody) {
+          hoveredBodyRef.current = nextHoveredBody;
+          setHoveredBody(nextHoveredBody);
+        }
+      } else if (!isInteractiveRef.current && hoveredBodyRef.current) {
+        hoveredBodyRef.current = null;
         setHoveredBody(null);
       }
 
@@ -784,15 +799,14 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     // Clean up
     return () => {
       cancelAnimationFrame(animationFrameId);
-      canvas.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('mousemove', handlePointerMove);
-      window.removeEventListener('mouseup', handlePointerUp);
+      canvas.removeEventListener('pointerdown', handlePointerDown);
+      canvas.removeEventListener('pointermove', handlePointerMove);
+      canvas.removeEventListener('pointerup', handlePointerUp);
+      canvas.removeEventListener('pointercancel', handlePointerUp);
+      canvas.removeEventListener('pointerleave', handlePointerLeave);
       canvas.removeEventListener('click', handleClick);
       container.removeEventListener('wheel', handleWheel);
       window.removeEventListener('scroll', handleScroll);
-      canvas.removeEventListener('touchstart', handlePointerDown);
-      window.removeEventListener('touchmove', handlePointerMove);
-      window.removeEventListener('touchend', handlePointerUp);
       window.removeEventListener('resize', handleResize);
 
       // Dispose Three resources
@@ -826,7 +840,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
   const adjustCameraZoom = (amount: number) => {
     sound.playClick();
     targetCameraDistance.current = Math.max(
-      5,
+      2,
       Math.min(40, targetCameraDistance.current + amount)
     );
   };
