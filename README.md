@@ -14,8 +14,8 @@ Deep-Tech Systems Architect & AI Researcher building intelligence closer to the 
   - YouTube: [How Computers Think — Zero to Research](https://youtube.com/@ayushkaushik08)
   - Email: `ayushkaushik1441@gmail.com`
 
-## Acknowledgement & Credits
-This project architecture and 3D portfolio base is forked and customized under the MIT License from the open-source template originally created by [red1-for-hek/portfolio-website](https://github.com/red1-for-hek/portfolio-website).
+## About This Website
+This is Ayush Kaushik's independently designed and developed portfolio website, built around the AAYU identity and original presentation of his systems work. It brings together a custom 3D technology universe, project and research showcases, an interactive chess experience, and the Ask AAYU assistant.
 
 ## Tech Stack
 - **Frontend**: React 19, TypeScript, Three.js, Tailwind CSS v4, Motion
