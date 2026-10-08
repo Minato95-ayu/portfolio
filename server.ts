@@ -11,8 +11,50 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const isProduction = process.env.NODE_ENV === 'production';
+const MAX_CHAT_MESSAGE_LENGTH = 2000;
+const CHAT_RATE_LIMIT_WINDOW_MS = 60_000;
+const CHAT_RATE_LIMIT_MAX_REQUESTS = 20;
+const CHAT_RATE_LIMITS = new Map<string, number[]>();
 
-app.use(express.json());
+const sanitizeText = (value: unknown, maxLength: number): string => {
+  if (typeof value !== 'string') return '';
+  return value.replace(/[\x00-\x1F\x7F]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, maxLength);
+};
+
+const getClientIp = (req: Request): string => {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (typeof forwardedFor === 'string') return forwardedFor.split(',')[0].trim();
+  if (Array.isArray(forwardedFor) && forwardedFor.length > 0) return forwardedFor[0].trim();
+  return req.socket.remoteAddress || 'unknown';
+};
+
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
+app.use(express.json({ limit: '1mb' }));
+app.use((_req: Request, res: Response, next: () => void) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), interest-cohort=()');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  next();
+});
+
+app.use('/api/chat', (req: Request, res: Response, next: () => void) => {
+  const clientIp = getClientIp(req);
+  const now = Date.now();
+  const requests = CHAT_RATE_LIMITS.get(clientIp) ?? [];
+  const recentRequests = requests.filter((timestamp) => now - timestamp < CHAT_RATE_LIMIT_WINDOW_MS);
+
+  if (recentRequests.length >= CHAT_RATE_LIMIT_MAX_REQUESTS) {
+    res.status(429).json({ error: 'Too many chat requests. Please wait a moment and try again.' });
+    return;
+  }
+
+  recentRequests.push(now);
+  CHAT_RATE_LIMITS.set(clientIp, recentRequests);
+  next();
+});
 
 // --- API Endpoints ---
 
@@ -68,9 +110,18 @@ app.get('/api/free-llms', (_req: Request, res: Response) => {
 
 // POST /api/chat (AI Assistant for AAYU Portfolio with mnfst/awesome-free-llm-apis multi-provider rotation)
 app.post('/api/chat', async (req: Request, res: Response) => {
-  const { message, preferredProvider } = req.body;
-  if (!message || typeof message !== 'string') {
+  const rawMessage = req.body?.message;
+  const rawPreferredProvider = req.body?.preferredProvider;
+  const message = sanitizeText(rawMessage, MAX_CHAT_MESSAGE_LENGTH);
+  const preferredProvider = typeof rawPreferredProvider === 'string' ? rawPreferredProvider.trim() : undefined;
+
+  if (!message) {
     res.status(400).json({ error: 'Message is required' });
+    return;
+  }
+
+  if (preferredProvider && preferredProvider !== 'auto' && !AWESOME_FREE_LLM_PROVIDERS.some((provider) => provider.id === preferredProvider)) {
+    res.status(400).json({ error: 'Unsupported provider selected' });
     return;
   }
 

@@ -10,6 +10,9 @@ interface Message {
   time: string;
 }
 
+const sanitizeChatInput = (value: string): string =>
+  value.replace(/[\r\n\u0000-\u001F\u007F]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500);
+
 const SUGGESTED_PROMPTS = [
   'What is AAYU programming language?',
   'Explain Intent-to-Silicon (I2S) research',
@@ -53,12 +56,12 @@ export const AayuAssistant: React.FC<{ onClose: () => void }> = ({ onClose }) =>
   }, [messages, isTyping]);
 
   const handleSend = async (textToSend?: string) => {
-    const query = textToSend || input;
-    if (!query.trim() || isTyping) return;
+    const query = sanitizeChatInput(textToSend || input);
+    if (!query || isTyping) return;
 
     sound.playClick();
     const userTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const newMsg: Message = { role: 'user', content: query.trim(), time: userTime };
+    const newMsg: Message = { role: 'user', content: query, time: userTime };
 
     setMessages((prev) => [...prev, newMsg]);
     if (!textToSend) setInput('');

@@ -543,10 +543,11 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
 
     const handleWheel = (e: WheelEvent) => {
       if (!isInteractiveRef.current) return;
-      // Zoom in / out with boundaries
+      if (e.target instanceof HTMLElement && e.target.closest('[data-no-zoom]')) return;
+      e.preventDefault();
       targetCameraDistance.current = Math.max(
         5,
-        Math.min(40, targetCameraDistance.current + e.deltaY * 0.015)
+        Math.min(40, targetCameraDistance.current + e.deltaY * 0.02)
       );
     };
 
@@ -597,7 +598,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     window.addEventListener('mousemove', handlePointerMove, { passive: true });
     window.addEventListener('mouseup', handlePointerUp);
     canvas.addEventListener('click', handleClick);
-    canvas.addEventListener('wheel', handleWheel, { passive: true });
+    container.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     // Touch support
@@ -787,7 +788,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       window.removeEventListener('mousemove', handlePointerMove);
       window.removeEventListener('mouseup', handlePointerUp);
       canvas.removeEventListener('click', handleClick);
-      canvas.removeEventListener('wheel', handleWheel);
+      container.removeEventListener('wheel', handleWheel);
       window.removeEventListener('scroll', handleScroll);
       canvas.removeEventListener('touchstart', handlePointerDown);
       window.removeEventListener('touchmove', handlePointerMove);
@@ -820,6 +821,14 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     setCameraFocusedOnBody(null);
     targetUserRotation.current = { x: 0.28, y: 0 };
     targetCameraDistance.current = 30;
+  };
+
+  const adjustCameraZoom = (amount: number) => {
+    sound.playClick();
+    targetCameraDistance.current = Math.max(
+      5,
+      Math.min(40, targetCameraDistance.current + amount)
+    );
   };
 
   return (
@@ -1009,6 +1018,22 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
               <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px] text-white/50">
                 <button
                   type="button"
+                  onClick={() => adjustCameraZoom(-3)}
+                  aria-label="Zoom in on 3D solar system"
+                  className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/10 border border-white/10 rounded cursor-pointer text-white/70 hover:text-white"
+                >
+                  ＋ ZOOM
+                </button>
+                <button
+                  type="button"
+                  onClick={() => adjustCameraZoom(3)}
+                  aria-label="Zoom out on 3D solar system"
+                  className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/10 border border-white/10 rounded cursor-pointer text-white/70 hover:text-white"
+                >
+                  － ZOOM
+                </button>
+                <button
+                  type="button"
                   onClick={handleResetCamera}
                   className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/10 border border-white/10 rounded cursor-pointer text-white/70 hover:text-white"
                 >
@@ -1089,7 +1114,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       {/* DETAILED CELESTIAL INSPECTION MODAL DRAWER                */}
       {/* ========================================================= */}
       {isInteractiveMode && selectedBody && (
-        <div className="absolute bottom-3 sm:bottom-6 left-3 right-3 sm:left-auto sm:right-8 z-40 pointer-events-auto bg-[#0d121a]/98 border border-white/20 p-4 sm:p-5 rounded-sm backdrop-blur-lg shadow-2xl w-auto sm:w-[420px] max-h-[55vh] overflow-y-auto animate-fadeIn transition-all">
+        <div data-no-zoom className="absolute bottom-3 sm:bottom-6 left-3 right-3 sm:left-auto sm:right-8 z-40 pointer-events-auto bg-[#0d121a]/98 border border-white/20 p-4 sm:p-5 rounded-sm backdrop-blur-lg shadow-2xl w-auto sm:w-[420px] max-h-[55vh] overflow-y-auto animate-fadeIn transition-all">
           {/* Header */}
           <div className="flex items-start justify-between pb-3 border-b border-white/10 gap-2">
             <div className="flex items-center space-x-3 min-w-0 flex-1">

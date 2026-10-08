@@ -12,6 +12,11 @@ import {
 import { sound } from '../../utils/audio.ts';
 import { AyushAvatarLogo } from '../ui/AyushAvatarLogo.tsx';
 
+const sanitizeContactField = (value: string, maxLength: number): string =>
+  value.replace(/[\r\n\u0000-\u001F\u007F]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, maxLength);
+
+const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
 export const ConnectSection: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -23,10 +28,15 @@ export const ConnectSection: React.FC = () => {
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [feedbackMsg, setFeedbackMsg] = useState<string>('');
 
+  const name = sanitizeContactField(formData.name, 80);
+  const email = sanitizeContactField(formData.email, 254).toLowerCase();
+  const interest = sanitizeContactField(formData.interest, 120);
+  const message = sanitizeContactField(formData.message, 2000);
+
   const mailtoLink = `mailto:${PROFILE_DATA.links.email}?subject=${encodeURIComponent(
-    `[AAYU Inquiry] ${formData.interest}`
+    `[AAYU Inquiry] ${interest}`
   )}&body=${encodeURIComponent(
-    `Name: ${formData.name}\nEmail: ${formData.email}\nFocus: ${formData.interest}\n\n${formData.message}`
+    `Name: ${name}\nEmail: ${email}\nFocus: ${interest}\n\n${message}`
   )}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,12 +45,23 @@ export const ConnectSection: React.FC = () => {
     setStatus('sending');
     setFeedbackMsg('');
 
+    const safeName = sanitizeContactField(formData.name, 80);
+    const safeEmail = sanitizeContactField(formData.email, 254).toLowerCase();
+    const safeInterest = sanitizeContactField(formData.interest, 120);
+    const safeMessage = sanitizeContactField(formData.message, 2000);
+
+    if (!safeName || !safeEmail || !safeMessage || !isValidEmail(safeEmail)) {
+      setStatus('error');
+      setFeedbackMsg('Please fill in your name, a valid email, and a message before sending.');
+      return;
+    }
+
     const submission = {
-      name: formData.name,
-      email: formData.email,
-      interest: formData.interest,
-      message: formData.message,
-      _subject: `[Portfolio Inquiry] ${formData.interest}`,
+      name: safeName,
+      email: safeEmail,
+      interest: safeInterest,
+      message: safeMessage,
+      _subject: `[Portfolio Inquiry] ${safeInterest}`,
       _template: 'table',
     };
 
@@ -242,7 +263,7 @@ export const ConnectSection: React.FC = () => {
                   required
                   placeholder="e.g. Elena Rostova"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, name: sanitizeContactField(e.target.value, 80) })}
                   className="w-full bg-[#131922] border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-white/20 focus:border-[#84cc16] focus:outline-none font-mono"
                 />
               </div>
@@ -256,7 +277,7 @@ export const ConnectSection: React.FC = () => {
                   required
                   placeholder="e.g. researcher@lab.org"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, email: sanitizeContactField(e.target.value, 254) })}
                   className="w-full bg-[#131922] border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-white/20 focus:border-[#84cc16] focus:outline-none font-mono"
                 />
               </div>
@@ -289,7 +310,7 @@ export const ConnectSection: React.FC = () => {
                 rows={5}
                 placeholder="Share your research question, project scope, or technical topic..."
                 value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, message: sanitizeContactField(e.target.value, 2000) })}
                 className="w-full bg-[#131922] border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-white/20 focus:border-[#84cc16] focus:outline-none font-mono"
               />
             </div>

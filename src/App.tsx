@@ -75,7 +75,7 @@ export default function App() {
 
   // ScrollSpy to track active section for navigation
   useEffect(() => {
-    const sections = ['hero', 'galaxy', 'systems', 'free-llms', 'lab', 'about', 'expertise', 'public-work', 'chess', 'connect'];
+    const sections = ['hero', 'galaxy', 'chess', 'systems', 'lab', 'about', 'expertise', 'public-work', 'connect', 'free-llms'];
     const handleScroll = () => {
       const scrollPos = window.scrollY + 200;
       for (const sectionId of sections) {
@@ -184,15 +184,15 @@ export default function App() {
         <TechGalaxySection
           onOpenFullscreenGalaxy={() => setIsGalaxyLabOpen(true)}
         />
+        <ChessSection />
         <FlagshipSystemsSection onSelectProject={openProjectDetail} />
-        <FreeLlmApisSection onTestProvider={() => setChatOpen(true)} />
         <ResearchLabSection onSelectProject={openProjectDetail} />
         <YouTubeStrip />
         <AboutSection />
         <ExpertiseSection />
         <PublicWorkSection onSelectProject={openProjectDetail} />
-        <ChessSection />
         <ConnectSection />
+        <FreeLlmApisSection onTestProvider={() => setChatOpen(true)} />
       </main>
 
       {/* Project Detail Modal / Dedicated Route View */}
