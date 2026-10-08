@@ -1,0 +1,14 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+build_errors.txt
+build_output.txt
+test.js
+screen-capture*.webm
+*.tsbuildinfo
+vite.config.old.ts

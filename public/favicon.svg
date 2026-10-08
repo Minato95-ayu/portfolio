@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#161c24"/>
+      <stop offset="100%" stop-color="#0a0c10"/>
+    </radialGradient>
+
+    <!-- Holographic Glow Filter -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Skin Tone Gradients -->
+    <linearGradient id="skinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f6c297"/>
+      <stop offset="50%" stop-color="#e3a777"/>
+      <stop offset="100%" stop-color="#cc8e5b"/>
+    </linearGradient>
+
+    <!-- Hair Gradient -->
+    <linearGradient id="hairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#242830"/>
+      <stop offset="60%" stop-color="#111317"/>
+      <stop offset="100%" stop-color="#090a0d"/>
+    </linearGradient>
+
+    <!-- Jacket Gradient -->
+    <linearGradient id="jacketGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1c222b"/>
+      <stop offset="100%" stop-color="#0d1015"/>
+    </linearGradient>
+
+    <!-- Glasses Frame & Glare -->
+    <linearGradient id="glassesGlare" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.85"/>
+      <stop offset="40%" stop-color="#84cc16" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    @keyframes pulseRing {
+      0%, 100% { r: 59px; opacity: 0.8; }
+      50% { r: 61px; opacity: 0.3; }
+    }
+    @keyframes neonBlink {
+      0%, 90%, 100% { opacity: 1; }
+      93%, 97% { opacity: 0.4; }
+    }
+    .ring-pulse { animation: pulseRing 3s ease-in-out infinite; }
+    .glare-blink { animation: neonBlink 4s ease-in-out infinite; }
+  </style>
+
+  <!-- Base Badge Squircle -->
+  <rect x="4" y="4" width="120" height="120" rx="32" fill="url(#bgGrad)" stroke="#84cc16" stroke-width="2.5" stroke-opacity="0.8"/>
+  <circle cx="64" cy="64" r="59" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="6,4" stroke-opacity="0.6" class="ring-pulse"/>
+
+  <!-- Neck & Inner Shirt -->
+  <path d="M52 82 L76 82 L74 95 L54 95 Z" fill="#cc8e5b"/>
+  <!-- Blue Inner T-shirt Collar -->
+  <path d="M50 93 Q64 100 78 93 L82 108 L46 108 Z" fill="#1e3a8a"/>
+
+  <!-- Dark Tech Jacket with Lime Zip Line -->
+  <path d="M26 124 Q36 94 50 90 L64 104 L78 90 Q92 94 102 124 Z" fill="url(#jacketGrad)"/>
+  <path d="M63 97 L65 97 L65 124 L63 124 Z" fill="#84cc16" filter="url(#neonGlow)"/>
+  <!-- Jacket Collar lapels -->
+  <path d="M46 91 L58 106 L53 118 L36 102 Z" fill="#242b36"/>
+  <path d="M82 91 L70 106 L75 118 L92 102 Z" fill="#242b36"/>
+
+  <!-- Head / Face base -->
+  <ellipse cx="64" cy="66" rx="23" ry="27" fill="url(#skinGrad)"/>
+  <!-- Subtle Ears -->
+  <ellipse cx="40" cy="67" rx="3.5" ry="6" fill="#cc8e5b"/>
+  <ellipse cx="88" cy="67" rx="3.5" ry="6" fill="#cc8e5b"/>
+
+  <!-- Modern Hair (Short dark textured hair with side trim & clean fringe) -->
+  <!-- Back / Side Hair -->
+  <path d="M40 64 Q38 46 48 38 Q64 33 80 38 Q90 46 88 64 Q84 48 64 45 Q44 48 40 64 Z" fill="url(#hairGrad)"/>
+  <!-- Front textured hair volume -->
+  <path d="M39 52 C40 36, 52 30, 64 30 C76 30, 88 36, 89 52 C82 45, 75 42, 64 43 C53 42, 45 46, 39 52 Z" fill="#14171d"/>
+  <!-- Hair strands / fringe detailing -->
+  <path d="M44 46 Q52 40 62 42 Q70 41 82 47 Q74 41 64 39 Q52 39 44 46 Z" fill="#2c323d"/>
+
+  <!-- Modern Dark Rectangular Glasses Frame -->
+  <!-- Left Lens Frame -->
+  <rect x="44" y="59" width="17" height="13" rx="3.5" fill="#0d1117" stroke="#1f2937" stroke-width="2"/>
+  <!-- Right Lens Frame -->
+  <rect x="67" y="59" width="17" height="13" rx="3.5" fill="#0d1117" stroke="#1f2937" stroke-width="2"/>
+  <!-- Bridge -->
+  <path d="M61 64 L67 64" stroke="#1f2937" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Frame Temples -->
+  <path d="M41 62 L44 63" stroke="#1f2937" stroke-width="2"/>
+  <path d="M84 63 L87 62" stroke="#1f2937" stroke-width="2"/>
+
+  <!-- Holographic Glare & Smart Lens Reflection -->
+  <polygon points="46,61 58,61 50,70 46,70" fill="url(#glassesGlare)" opacity="0.85" class="glare-blink"/>
+  <polygon points="69,61 81,61 73,70 69,70" fill="url(#glassesGlare)" opacity="0.85" class="glare-blink"/>
+
+  <!-- Eyes behind lens -->
+  <ellipse cx="52.5" cy="65.5" rx="3" ry="2.2" fill="#1a1c23"/>
+  <circle cx="53.5" cy="64.8" r="0.9" fill="#ffffff"/>
+  <ellipse cx="75.5" cy="65.5" rx="3" ry="2.2" fill="#1a1c23"/>
+  <circle cx="76.5" cy="64.8" r="0.9" fill="#ffffff"/>
+
+  <!-- Eyebrows -->
+  <path d="M46 56 Q53 53 60 56" stroke="#11141a" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M68 56 Q75 53 82 56" stroke="#11141a" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Nose -->
+  <path d="M64 66 L63 74 Q64 76 66 75" stroke="#b87848" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+
+  <!-- Friendly Warm Smile -->
+  <path d="M57 79 Q64 85 71 79" stroke="#944d2d" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M58 80 Q64 84 70 80" fill="#ffffff" opacity="0.9"/>
+
+  <!-- 3D Tech Node Badge / Holographic Halo Accent -->
+  <circle cx="106" cy="22" r="10" fill="#0b0f14" stroke="#84cc16" stroke-width="1.5" filter="url(#neonGlow)"/>
+  <text x="106" y="26" font-family="monospace" font-size="9" font-weight="900" fill="#84cc16" text-anchor="middle">AK</text>
+
+  <!-- Cyan Neural Spark dot -->
+  <circle cx="22" cy="106" r="4" fill="#38bdf8" filter="url(#neonGlow)"/>
+</svg>
