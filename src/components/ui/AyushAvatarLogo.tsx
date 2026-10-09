@@ -126,8 +126,8 @@ export const AyushAvatarLogo: React.FC<AyushAvatarProps> = ({
           <div
             className={`absolute -inset-2 rounded-full transition-all duration-700 pointer-events-none ${
               isHovered || speaking
-                ? 'bg-gradient-to-tr from-[#84cc16]/30 via-[#38bdf8]/30 to-[#a855f7]/25 blur-lg opacity-100 scale-105'
-                : 'bg-gradient-to-tr from-[#84cc16]/15 via-[#38bdf8]/10 to-transparent blur-md opacity-60'
+                ? 'bg-gradient-to-tr from-[#B6FF5C]/35 via-[#52D7F2]/30 to-[#A88BFF]/25 blur-lg opacity-100 scale-110'
+                : 'bg-gradient-to-tr from-[#B6FF5C]/20 via-[#52D7F2]/15 to-transparent blur-md opacity-75'
             }`}
           />
         )}
@@ -171,9 +171,9 @@ export const AyushAvatarLogo: React.FC<AyushAvatarProps> = ({
             </linearGradient>
 
             <linearGradient id={`glassesGrad-${variant}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={hudActive ? '#a855f7' : '#38bdf8'} stopOpacity="0.8" />
-              <stop offset="50%" stopColor="#84cc16" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.1" />
+              <stop offset="0%" stopColor={hudActive ? '#A88BFF' : '#52D7F2'} stopOpacity="0.8" />
+              <stop offset="50%" stopColor="#B6FF5C" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#52D7F2" stopOpacity="0.1" />
             </linearGradient>
 
             <filter id={`neonGlow-${variant}`} x="-30%" y="-30%" width="160%" height="160%">
@@ -193,7 +193,7 @@ export const AyushAvatarLogo: React.FC<AyushAvatarProps> = ({
             height="120"
             rx="32"
             fill={`url(#avatarBg-${variant})`}
-            stroke={isHovered ? '#84cc16' : '#2a3441'}
+            stroke={isHovered ? '#B6FF5C' : '#2a3441'}
             strokeWidth="2.2"
             className="transition-colors duration-300"
           />
@@ -204,9 +204,9 @@ export const AyushAvatarLogo: React.FC<AyushAvatarProps> = ({
             cy="64"
             r="58"
             fill="none"
-            stroke={speaking ? '#84cc16' : '#38bdf8'}
-            strokeWidth={speaking ? '2' : '1.2'}
-            strokeDasharray="6,4"
+            stroke={speaking ? '#B6FF5C' : '#52D7F2'}
+            strokeWidth={speaking ? '2.2' : '1.5'}
+            strokeDasharray="8,4"
             strokeOpacity={isHovered || speaking ? '0.9' : '0.4'}
             className={speaking ? 'animate-spin' : ''}
             style={{ animationDuration: '6s' }}
@@ -224,7 +224,7 @@ export const AyushAvatarLogo: React.FC<AyushAvatarProps> = ({
           {/* Luminous Zipper accent */}
           <path
             d="M63 97 L65 97 L65 124 L63 124 Z"
-            fill="#84cc16"
+            fill="#B6FF5C"
             filter={`url(#neonGlow-${variant})`}
           />
           {/* Jacket Collar Lapels */}
@@ -360,11 +360,11 @@ export const AyushAvatarLogo: React.FC<AyushAvatarProps> = ({
 
             {/* Optional Cyberpunk HUD Data Overlay */}
             {hudActive && (
-              <g stroke="#38bdf8" strokeWidth="0.8" opacity="0.85">
+              <g stroke="#52D7F2" strokeWidth="0.8" opacity="0.85">
                 <line x1="46" y1="64" x2="56" y2="64" strokeDasharray="1,1" />
                 <line x1="72" y1="64" x2="82" y2="64" strokeDasharray="1,1" />
-                <circle cx="58" cy="62" r="1.5" fill="#84cc16" />
-                <circle cx="82" cy="62" r="1.5" fill="#84cc16" />
+                <circle cx="58" cy="62" r="1.5" fill="#B6FF5C" />
+                <circle cx="82" cy="62" r="1.5" fill="#B6FF5C" />
               </g>
             )}
           </g>
@@ -401,14 +401,14 @@ export const AyushAvatarLogo: React.FC<AyushAvatarProps> = ({
 
           {/* Founder Tech Badge in corner */}
           <g filter={`url(#neonGlow-${variant})`}>
-            <circle cx="106" cy="22" r="11" fill="#0c1117" stroke="#84cc16" strokeWidth="1.5" />
+            <circle cx="106" cy="22" r="11" fill="#0c1117" stroke="#B6FF5C" strokeWidth="1.5" />
             <text
               x="106"
               y="26"
               fontFamily="monospace"
               fontSize="9.5"
               fontWeight="900"
-              fill="#84cc16"
+              fill="#B6FF5C"
               textAnchor="middle"
             >
               AK
@@ -417,7 +417,7 @@ export const AyushAvatarLogo: React.FC<AyushAvatarProps> = ({
 
           {/* Speaking Audio Wave Animation */}
           {speaking && (
-            <g stroke="#84cc16" strokeWidth="1.5" strokeLinecap="round" className="animate-pulse">
+            <g stroke="#B6FF5C" strokeWidth="1.5" strokeLinecap="round" className="animate-pulse">
               <line x1="20" y1="64" x2="20" y2="70" />
               <line x1="24" y1="60" x2="24" y2="74" />
               <line x1="28" y1="62" x2="28" y2="72" />
@@ -429,7 +429,7 @@ export const AyushAvatarLogo: React.FC<AyushAvatarProps> = ({
         <span
           className={`absolute bottom-0 right-0 rounded-full border-2 border-[#0B0D10] ${
             actualSize >= 64 ? 'w-4 h-4' : 'w-2.5 h-2.5'
-          } ${speaking ? 'bg-[#38bdf8] animate-ping' : 'bg-[#84cc16]'}`}
+          } ${speaking ? 'bg-[#52D7F2] animate-ping' : 'bg-[#B6FF5C]'}`}
           title="Ayush Kaushik Online / Live Node"
         />
         </div>
@@ -441,7 +441,7 @@ export const AyushAvatarLogo: React.FC<AyushAvatarProps> = ({
           <button
             type="button"
             onClick={handleVoiceIntro}
-            className="flex items-center space-x-1 px-2.5 py-1 rounded bg-[#84cc16]/10 border border-[#84cc16]/30 text-[#84cc16] hover:bg-[#84cc16]/20 transition-colors"
+            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-[#B6FF5C]/10 border border-[#B6FF5C]/30 text-[#B6FF5C] hover:bg-[#B6FF5C]/20 transition-colors"
           >
             <Volume2 size={12} className={speaking ? 'animate-bounce' : ''} />
             <span>{speaking ? 'GREETING...' : 'VOICE INTRO'}</span>
@@ -456,7 +456,7 @@ export const AyushAvatarLogo: React.FC<AyushAvatarProps> = ({
             }}
             className={`flex items-center space-x-1 px-2.5 py-1 rounded border transition-colors ${
               hudActive
-                ? 'bg-[#38bdf8]/20 border-[#38bdf8] text-[#38bdf8]'
+                ? 'bg-[#52D7F2]/20 border-[#52D7F2] text-[#52D7F2]'
                 : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
             }`}
           >

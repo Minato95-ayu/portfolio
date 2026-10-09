@@ -17,6 +17,7 @@ export interface Move {
 
 export interface SearchResult {
   move: Move;
+  predictedReply: Move | null;
   score: number;
   depth: number;
   nodes: number;
@@ -35,7 +36,16 @@ const MATE_SCORE = 100_000;
 const MAX_QUIESCENCE_DEPTH = 5;
 const MAX_SEARCH_NODES = 10_000;
 const MAX_SEARCH_TIME_MS = 400;
+const MAX_TRANSPOSITION_ENTRIES = 20_000;
 type EvaluatedPiece = Pick<Piece, 'type' | 'color'>;
+type TranspositionBound = 'exact' | 'lower' | 'upper';
+
+interface TranspositionEntry {
+  depth: number;
+  score: number;
+  bound: TranspositionBound;
+  bestMove: string;
+}
 
 class SearchLimitReached extends Error {}
 
@@ -169,11 +179,34 @@ function moveOrderScore(move: ChessMove): number {
   return score;
 }
 
-function orderedMoves(chess: Chess, capturesOnly = false): ChessMove[] {
-  const moves = chess.moves({ verbose: true }) as ChessMove[];
+function moveKey(move: ChessMove): string {
+  return `${move.from}${move.to}${move.promotion ?? ''}`;
+}
+
+function positionKey(chess: Chess): string {
+  return chess.fen().split(' ').slice(0, 5).join(' ');
+}
+
+function orderedMoves(
+  chess: Chess,
+  capturesOnly = false,
+  preferredMove?: string,
+  legalMoves?: ChessMove[],
+): ChessMove[] {
+  const moves = legalMoves ?? chess.moves({ verbose: true }) as ChessMove[];
   return moves
     .filter((move) => !capturesOnly || move.captured || move.promotion)
-    .sort((a, b) => moveOrderScore(b) - moveOrderScore(a));
+    .sort((a, b) => {
+      if (moveKey(a) === preferredMove) return -1;
+      if (moveKey(b) === preferredMove) return 1;
+      return moveOrderScore(b) - moveOrderScore(a);
+    });
+}
+
+function isRuleDraw(chess: Chess): boolean {
+  return chess.isDrawByFiftyMoves()
+    || chess.isInsufficientMaterial()
+    || chess.isThreefoldRepetition();
 }
 
 function quiescence(
@@ -185,10 +218,11 @@ function quiescence(
 ): number {
   nodes.count++;
   checkSearchLimit(nodes);
-  if (chess.isCheckmate()) return -MATE_SCORE + ply;
-  if (chess.isDraw()) return 0;
-
   const checked = chess.isCheck();
+  const moves = chess.moves({ verbose: true }) as ChessMove[];
+  if (moves.length === 0) return checked ? -MATE_SCORE + ply : 0;
+  if (isRuleDraw(chess)) return 0;
+
   const staticScore = (chess.turn() === 'w' ? 1 : -1) * evaluatePieces(chess.board());
   const standPat = checked ? -Infinity : staticScore;
 
@@ -199,7 +233,7 @@ function quiescence(
   if (ply >= MAX_QUIESCENCE_DEPTH) return staticScore;
 
   let best = checked ? -Infinity : standPat;
-  for (const move of orderedMoves(chess, !checked)) {
+  for (const move of orderedMoves(chess, !checked, undefined, moves)) {
     chess.move(move);
     let score: number;
     try {
@@ -221,28 +255,54 @@ function negamax(
   beta: number,
   ply: number,
   nodes: { count: number; startedAt: number },
+  transpositions: Map<string, TranspositionEntry>,
 ): number {
   nodes.count++;
   checkSearchLimit(nodes);
-  if (chess.isCheckmate()) return -MATE_SCORE + ply;
-  if (chess.isDraw()) return 0;
   if (depth <= 0) return quiescence(chess, alpha, beta, 0, nodes);
 
-  const moves = orderedMoves(chess);
-  if (moves.length === 0) return 0;
+  const moves = chess.moves({ verbose: true }) as ChessMove[];
+  if (moves.length === 0) return chess.isCheck() ? -MATE_SCORE + ply : 0;
+  if (isRuleDraw(chess)) return 0;
+
+  const key = positionKey(chess);
+  const entry = transpositions.get(key);
+  const originalAlpha = alpha;
+  const originalBeta = beta;
+  if (entry && entry.depth >= depth) {
+    if (entry.bound === 'exact') return entry.score;
+    if (entry.bound === 'lower') alpha = Math.max(alpha, entry.score);
+    if (entry.bound === 'upper') beta = Math.min(beta, entry.score);
+    if (alpha >= beta) return entry.score;
+  }
+
+  const ordered = orderedMoves(chess, false, entry?.bestMove, moves);
 
   let bestScore = -Infinity;
-  for (const move of moves) {
+  let bestMove = '';
+  for (const move of ordered) {
     chess.move(move);
     let score: number;
     try {
-      score = -negamax(chess, depth - 1, -beta, -alpha, ply + 1, nodes);
+      score = -negamax(chess, depth - 1, -beta, -alpha, ply + 1, nodes, transpositions);
     } finally {
       chess.undo();
     }
-    bestScore = Math.max(bestScore, score);
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = moveKey(move);
+    }
     alpha = Math.max(alpha, score);
     if (alpha >= beta) break;
+  }
+
+  if (transpositions.size < MAX_TRANSPOSITION_ENTRIES || transpositions.has(key)) {
+    transpositions.set(key, {
+      depth,
+      score: bestScore,
+      bound: bestScore <= originalAlpha ? 'upper' : bestScore >= originalBeta ? 'lower' : 'exact',
+      bestMove,
+    });
   }
   return bestScore;
 }
@@ -255,6 +315,7 @@ export function findBestMove(position: string, color: PieceColor, depth = 3): Se
   if (rootMoves.length === 0) return null;
 
   const nodes = { count: 0, startedAt: Date.now() };
+  const transpositions = new Map<string, TranspositionEntry>();
   let bestMove = rootMoves[0];
   let bestScore = -Infinity;
   for (const move of rootMoves) {
@@ -277,11 +338,12 @@ export function findBestMove(position: string, color: PieceColor, depth = 3): Se
     let iterationBestScore = -Infinity;
     let alpha = -Infinity;
     try {
-      for (const move of rootMoves) {
+      const iterationMoves = orderedMoves(chess, false, moveKey(bestMove));
+      for (const move of iterationMoves) {
         chess.move(move);
         let score: number;
         try {
-          score = -negamax(chess, currentDepth - 1, -Infinity, -alpha, 1, nodes);
+          score = -negamax(chess, currentDepth - 1, -Infinity, -alpha, 1, nodes, transpositions);
         } finally {
           chess.undo();
         }
@@ -301,8 +363,22 @@ export function findBestMove(position: string, color: PieceColor, depth = 3): Se
     completedDepth = currentDepth;
   }
 
+  let predictedReply: Move | null = null;
+  chess.move(bestMove);
+  try {
+    const replyKey = transpositions.get(positionKey(chess))?.bestMove;
+    if (replyKey) {
+      const reply = (chess.moves({ verbose: true }) as ChessMove[])
+        .find((candidate) => moveKey(candidate) === replyKey);
+      if (reply) predictedReply = fromChessMove(reply);
+    }
+  } finally {
+    chess.undo();
+  }
+
   return {
     move: fromChessMove(bestMove),
+    predictedReply,
     score: color === 'w' ? bestScore : -bestScore,
     depth: completedDepth,
     nodes: nodes.count,

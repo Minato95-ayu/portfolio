@@ -4,6 +4,7 @@
 class SoundSystem {
   private ctx: AudioContext | null = null;
   private enabled: boolean = false;
+  private lastOrbitSoundAt = 0;
 
   constructor() {
     // Audio is disabled by default to respect user autoplay preferences
@@ -13,22 +14,74 @@ class SoundSystem {
     return this.enabled;
   }
 
-  public setEnabled(enable: boolean) {
-    this.enabled = enable;
-    if (enable && !this.ctx) {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioCtx) {
-        this.ctx = new AudioCtx();
-      }
+  public async enableWithFeedback(): Promise<void> {
+    const AudioCtx = window.AudioContext
+      ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) {
+      throw new Error('This browser does not support sound effects.');
     }
-    if (enable && this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+
+    this.ctx ??= new AudioCtx();
+    if (this.ctx.state !== 'running') await this.ctx.resume();
+    if (this.ctx.state !== 'running') {
+      throw new Error('Audio could not start. Check your browser audio settings.');
     }
+
+    this.enabled = true;
+    this.playEnableChime();
   }
 
-  public toggle(): boolean {
-    this.setEnabled(!this.enabled);
-    return this.enabled;
+  public disable(): void {
+    this.enabled = false;
+  }
+
+  private playEnableChime(): void {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    [587.33, 880].forEach((frequency, index) => {
+      const startAt = now + index * 0.075;
+      const oscillator = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(frequency, startAt);
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.linearRampToValueAtTime(0.035, startAt + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.2);
+      oscillator.connect(gain);
+      gain.connect(this.ctx!.destination);
+      oscillator.start(startAt);
+      oscillator.stop(startAt + 0.21);
+    });
+  }
+
+  public playGalaxyEnter(): void {
+    if (!this.enabled || !this.ctx) return;
+    this.playBlip(520);
+    window.setTimeout(() => this.playBlip(780), 85);
+  }
+
+  public playOrbitMotion(): void {
+    if (!this.enabled || !this.ctx || this.ctx.state !== 'running') return;
+    const now = this.ctx.currentTime;
+    if (now - this.lastOrbitSoundAt < 0.16) return;
+    this.lastOrbitSoundAt = now;
+
+    try {
+      const oscillator = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(190, now);
+      oscillator.frequency.exponentialRampToValueAtTime(520, now + 0.2);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.022, now + 0.035);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+      oscillator.connect(gain);
+      gain.connect(this.ctx.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.25);
+    } catch {
+      // Audio can be interrupted if the browser suspends the page.
+    }
   }
 
   // Soft high-frequency cybernetic blip (node hover)

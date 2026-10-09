@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { ProjectData } from '../../data/projectsData.ts';
+import { PROFILE_DATA, ProjectData } from '../../data/projectsData.ts';
 import { IconByTag, IconGitHub, IconWebsite } from '../ui/Icons.tsx';
 import { sound } from '../../utils/audio.ts';
 
@@ -273,7 +273,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
             }}
             className="px-5 py-2.5 border border-white/20 hover:border-white/40 text-white text-xs font-mono rounded transition-colors cursor-pointer"
           >
-            ← BACK TO RESEARCH LAB
+            ← BACK TO PROJECTS
           </button>
 
           <div className="flex items-center space-x-3">
@@ -290,17 +290,19 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
               </a>
             )}
 
-            <a
-              href={project.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => sound.playClick()}
-              className="px-5 py-2.5 bg-[#84cc16] hover:bg-[#a3e635] text-[#07090e] font-mono text-xs font-bold rounded transition-all flex items-center space-x-2 shadow-[0_0_15px_rgba(132,204,22,0.3)]"
-            >
-              <IconGitHub size={16} />
-              <span>VIEW ON GITHUB</span>
-              <span>↗</span>
-            </a>
+            {project.githubUrl !== PROFILE_DATA.links.github && (
+              <a
+                href={project.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => sound.playClick()}
+                className="px-5 py-2.5 bg-[#B6FF5C] hover:bg-[#caff87] text-[#07090e] font-mono text-xs font-bold rounded-xl transition-all flex items-center space-x-2 shadow-[0_0_22px_rgba(182,255,92,0.2)]"
+              >
+                <IconGitHub size={16} />
+                <span>OPEN REPOSITORY</span>
+                <span>↗</span>
+              </a>
+            )}
           </div>
         </div>
       </div>

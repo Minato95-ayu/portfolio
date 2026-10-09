@@ -22,7 +22,7 @@ export const ChessSection: React.FC = () => {
         </h2>
 
         <p className="text-base text-white/70 max-w-3xl leading-relaxed">
-          Play legal chess against an alpha-beta minimax bot with capture-aware search, piece points, position evaluation, and a readable explanation of its last move.
+          Play legal chess against an iterative alpha-beta bot that reuses searched positions, calculates likely replies, and explains its last move.
         </p>
       </div>
 

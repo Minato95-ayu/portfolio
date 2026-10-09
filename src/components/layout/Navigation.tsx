@@ -24,11 +24,22 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [soundActive, setSoundActive] = useState(false);
+  const [soundError, setSoundError] = useState('');
 
-  const toggleSound = () => {
-    const newState = sound.toggle();
-    setSoundActive(newState);
-    if (newState) sound.playClick();
+  const toggleSound = async () => {
+    setSoundError('');
+    if (soundActive) {
+      sound.disable();
+      setSoundActive(false);
+      return;
+    }
+
+    try {
+      await sound.enableWithFeedback();
+      setSoundActive(true);
+    } catch (error) {
+      setSoundError(error instanceof Error ? error.message : String(error));
+    }
   };
 
   const navLinks = [
@@ -120,25 +131,28 @@ export const Navigation: React.FC<NavigationProps> = ({
           <button
             type="button"
             onClick={toggleSound}
-            title={soundActive ? 'Mute audio feedback' : 'Enable audio feedback'}
+            title={soundError || (soundActive ? 'Mute audio feedback' : 'Enable audio feedback')}
             aria-label={soundActive ? 'Audio ON' : 'Audio OFF'}
-            className={`hidden sm:flex items-center space-x-1.5 px-2 sm:px-2.5 py-1 text-[11px] font-mono border rounded transition-all cursor-pointer ${
+            className={`flex items-center space-x-1 sm:space-x-1.5 px-1.5 sm:px-2.5 py-1 text-[10px] sm:text-[11px] font-mono border rounded transition-all cursor-pointer ${
               soundActive
                 ? 'border-[#84cc16] text-[#84cc16] bg-[#84cc16]/10'
                 : 'border-white/10 text-white/50 hover:text-white hover:border-white/20'
             }`}
+            aria-pressed={soundActive}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${soundActive ? 'bg-[#84cc16]' : 'bg-white/30'}`} />
-            <span className="hidden md:inline">SFX</span>
+            <span>SFX</span>
             <span>{soundActive ? 'ON' : 'OFF'}</span>
           </button>
+          <span id="sound-status" className="sr-only" role="status" aria-live="polite">{soundError}</span>
 
           {/* 3D Solar System / Galaxy Lab Primary Toggle */}
           {onToggleGalaxyLab && (
             <button
               type="button"
               onClick={() => {
-                sound.playClick();
+                if (isGalaxyLabOpen) sound.playClick();
+                else sound.playGalaxyEnter();
                 onToggleGalaxyLab();
               }}
               title="Toggle 3D Tech Solar System & Galaxy Lab"

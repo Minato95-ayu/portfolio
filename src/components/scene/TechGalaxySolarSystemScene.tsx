@@ -98,6 +98,8 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
 
   const isInteractiveRef = useRef(isInteractiveMode);
   isInteractiveRef.current = isInteractiveMode;
+  const activeSectionRef = useRef(activeSection);
+  activeSectionRef.current = activeSection;
 
   // References for animation & interaction loop
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -146,7 +148,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
   const hoveredBodyRef = useRef<TechCelestialBody | null>(null);
 
   useEffect(() => {
-    if (isInteractiveMode) targetCameraDistance.current = 30;
+    if (isInteractiveMode) targetCameraDistance.current = 24;
   }, [isInteractiveMode]);
 
   // Helper to generate crisp billboard labels with tech symbol and category color
@@ -239,7 +241,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.05;
     renderer.setSize(width, height);
     rendererRef.current = renderer;
 
@@ -257,9 +259,9 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     const sunGeom = new THREE.SphereGeometry(AAYU_CORE_STAR.size, 32, 32);
     const sunTexture = createSurfaceTexture({
       ...AAYU_CORE_STAR,
-      color: '#D8FF62',
-      secondaryColor: '#FFB347',
-      category: 'AI_MODEL',
+      color: '#F18A3B',
+      secondaryColor: '#FFF1B8',
+      category: 'SYSTEMS',
     });
     if (sunTexture) surfaceTexturesRef.current.push(sunTexture);
     const sunMat = new THREE.MeshStandardMaterial({
@@ -278,10 +280,10 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     // Inner Radiant Polyhedron
     const sunInnerGeom = new THREE.IcosahedronGeometry(AAYU_CORE_STAR.size * 0.75, 1);
     const sunInnerMat = new THREE.MeshBasicMaterial({
-      color: 0x4cc9f0,
+      color: 0xe5fbff,
       wireframe: true,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.42,
     });
     const sunInnerMesh = new THREE.Mesh(sunInnerGeom, sunInnerMat);
     sunGroup.add(sunInnerMesh);
@@ -298,7 +300,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       const coronaMat = new THREE.MeshBasicMaterial({
         color: r === 0 ? 0xc6ff3d : r === 1 ? 0x4cc9f0 : 0x8b5cf6,
         transparent: true,
-        opacity: 0.2 - r * 0.04,
+        opacity: 0.3 - r * 0.045,
       });
       const ringMesh = new THREE.Mesh(coronaGeom, coronaMat);
       ringMesh.rotation.x = (Math.PI / 3) * (r + 1);
@@ -307,17 +309,29 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       coronaRings.push(ringMesh);
     }
 
+    const sunAuraGeometry = new THREE.SphereGeometry(AAYU_CORE_STAR.size * 1.55, 32, 32);
+    const sunAuraMaterial = new THREE.MeshBasicMaterial({
+      color: 0x8cecff,
+      side: THREE.BackSide,
+      transparent: true,
+      opacity: 0.13,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const sunAura = new THREE.Mesh(sunAuraGeometry, sunAuraMaterial);
+    sunGroup.add(sunAura);
+
     // Sun Label Sprite
     const sunSprite = createLabelSprite('AAYU CORE STAR', '☀️', '#C6FF3D');
     sunSprite.position.set(0, AAYU_CORE_STAR.size + 0.65, 0);
     sunGroup.add(sunSprite);
 
     // Central Sun Light
-    const sunLight = new THREE.PointLight(0xffe2a3, 5.5, 50, 1.35);
+    const sunLight = new THREE.PointLight(0xffe7b0, 4.2, 52, 1.25);
     sunLight.position.set(0, 0, 0);
     sunGroup.add(sunLight);
 
-    const sunSecondaryLight = new THREE.PointLight(0x4cc9f0, 0.35, 25, 1.5);
+    const sunSecondaryLight = new THREE.PointLight(0x52d7f2, 0.8, 30, 1.4);
     sunGroup.add(sunSecondaryLight);
 
     // ==========================================
@@ -337,9 +351,13 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       }
     >();
 
+    const planetAuraGeometry = new THREE.SphereGeometry(1, lowPowerDevice ? 16 : 24, lowPowerDevice ? 16 : 24);
+    const planetAuraMaterials: THREE.MeshBasicMaterial[] = [];
+
     TECH_GALAXY_BODIES.forEach((body, idx) => {
       const bodyGroup = new THREE.Group();
       worldGroup.add(bodyGroup);
+      const visualSize = body.size * 1.18;
 
       // 1. Orbit Path Ellipse / Circle
       const orbitPoints: THREE.Vector3[] = [];
@@ -366,18 +384,31 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
 
       // 2. Planet Mesh Sphere
       const planetSegments = lowPowerDevice ? 20 : 40;
-      const planetGeom = new THREE.SphereGeometry(body.size, planetSegments, planetSegments);
+      const planetGeom = new THREE.SphereGeometry(visualSize, planetSegments, planetSegments);
       const surfaceTexture = createSurfaceTexture(body);
       if (surfaceTexture) surfaceTexturesRef.current.push(surfaceTexture);
+      const auraMaterial = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(body.secondaryColor ?? body.color),
+        side: THREE.BackSide,
+        transparent: true,
+        opacity: 0.12,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      planetAuraMaterials.push(auraMaterial);
+      const planetAura = new THREE.Mesh(planetAuraGeometry, auraMaterial);
+      planetAura.scale.setScalar(visualSize * 1.65);
+      bodyGroup.add(planetAura);
+
       const planetMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         map: surfaceTexture,
         bumpMap: surfaceTexture,
-        bumpScale: 0.035,
+        bumpScale: 0.05,
         emissive: body.hexColor,
-        emissiveIntensity: 0.025,
+        emissiveIntensity: 0.045,
         roughness: body.category === 'AI_MODEL' ? 0.62 : 0.86,
-        metalness: 0.06,
+        metalness: 0.1,
       });
       const planetMesh = new THREE.Mesh(planetGeom, planetMat);
       planetMesh.rotation.z = 0.18 + body.inclination;
@@ -386,12 +417,12 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
 
       // 3. Optional Planetary Ring (Saturn-like)
       if (body.hasRing) {
-        const ringGeom = new THREE.RingGeometry(body.size * 1.4, body.size * 2.1, 32);
+        const ringGeom = new THREE.RingGeometry(visualSize * 1.35, visualSize * 2.05, 48);
         const ringMat = new THREE.MeshBasicMaterial({
           color: body.ringColor || body.hexColor,
           side: THREE.DoubleSide,
           transparent: true,
-          opacity: 0.45,
+          opacity: 0.58,
         });
         const saturnRing = new THREE.Mesh(ringGeom, ringMat);
         saturnRing.rotation.x = Math.PI / 2.5;
@@ -402,7 +433,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       const moonsList: { mesh: THREE.Mesh; dist: number; speed: number; angle: number }[] = [];
       if (body.moons && body.moons.length > 0) {
         body.moons.forEach((m, mIdx) => {
-          const moonGeom = new THREE.SphereGeometry(body.size * 0.16, 12, 10);
+          const moonGeom = new THREE.SphereGeometry(visualSize * 0.16, 12, 10);
           const moonMat = new THREE.MeshStandardMaterial({
             color: new THREE.Color(m.color).getHex(),
             emissive: new THREE.Color(m.color).getHex(),
@@ -414,7 +445,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
           bodyGroup.add(moonMesh);
           moonsList.push({
             mesh: moonMesh,
-            dist: m.dist + body.size * 0.5,
+            dist: m.dist + visualSize * 0.55,
             speed: (1.5 + mIdx * 0.8) * (mIdx % 2 === 0 ? 1 : -1),
             angle: Math.random() * Math.PI * 2,
           });
@@ -423,7 +454,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
 
       // 5. Billboard Label with tech logo symbol & name
       const sprite = createLabelSprite(body.name, body.symbol, body.color);
-      sprite.position.set(0, body.size + 0.42, 0);
+      sprite.position.set(0, visualSize + 0.45, 0);
       bodyGroup.add(sprite);
 
       // Stagger initial orbital angles evenly around the sun
@@ -446,17 +477,18 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     // ==========================================
     // 3. COSMIC STELLAR GALAXY FIELD (2,000 STARS)
     // ==========================================
-    const starCount = lowPowerDevice ? 900 : 2000;
+    const starCount = lowPowerDevice ? 1100 : 2600;
     const starGeom = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
 
     const colorPalette = [
-      new THREE.Color(0xc6ff3d), // Electric Lime
-      new THREE.Color(0x4cc9f0), // Cyan Blue
-      new THREE.Color(0x8b5cf6), // Violet
-      new THREE.Color(0xf59e0b), // Amber
-      new THREE.Color(0xef4444), // Crimson
+      new THREE.Color(0xdcecff),
+      new THREE.Color(0x9ecbff),
+      new THREE.Color(0x52d7f2),
+      new THREE.Color(0xa88bff),
+      new THREE.Color(0xb6ff5c),
+      new THREE.Color(0xffc780),
     ];
 
     for (let i = 0; i < starCount; i++) {
@@ -470,7 +502,8 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       starPositions[idx3 + 1] = heightSpread;
       starPositions[idx3 + 2] = Math.sin(armTheta) * radius;
 
-      const c = colorPalette[i % colorPalette.length];
+      const colorIndex = i % 12 < 6 ? 0 : i % 12 < 9 ? 1 : (i % 12) % colorPalette.length;
+      const c = colorPalette[colorIndex];
       starColors[idx3] = c.r;
       starColors[idx3 + 1] = c.g;
       starColors[idx3 + 2] = c.b;
@@ -480,22 +513,26 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     starGeom.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
 
     const starMat = new THREE.PointsMaterial({
-      size: 0.08,
+      size: 0.065,
       vertexColors: true,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.86,
       blending: THREE.AdditiveBlending,
     });
     const starField = new THREE.Points(starGeom, starMat);
     worldGroup.add(starField);
 
     // Ambient and directional lighting for planet 3D depth
-    const ambientLight = new THREE.AmbientLight(0x1c2734, 0.55);
+    const ambientLight = new THREE.AmbientLight(0x53617e, 0.82);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.16);
+    const dirLight = new THREE.DirectionalLight(0xc4e7ff, 0.48);
     dirLight.position.set(10, 20, 15);
     scene.add(dirLight);
+
+    const rimLight = new THREE.PointLight(0x725cff, 1.2, 70, 1.8);
+    rimLight.position.set(-18, 10, -12);
+    scene.add(rimLight);
 
     // ==========================================
     // 4. INTERACTIVE DRAG & ZOOM CONTROLS
@@ -514,6 +551,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     const handlePointerDown = (e: PointerEvent) => {
       if (!isInteractiveRef.current) return;
       if (e.button !== 0) return;
+      sound.playOrbitMotion();
       isDraggingRef.current = true;
       previousMousePosition.current = { x: e.clientX, y: e.clientY };
       canvas.setPointerCapture(e.pointerId);
@@ -559,6 +597,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       if (!isInteractiveRef.current) return;
       if (e.target instanceof Element && e.target.closest('[data-no-zoom]')) return;
       e.preventDefault();
+      sound.playOrbitMotion();
       targetCameraDistance.current = Math.max(
         2,
         Math.min(40, targetCameraDistance.current + e.deltaY * 0.02)
@@ -586,7 +625,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       if (intersects.length > 0) {
         const hit = intersects[0].object;
         const id = hit.userData.id as string;
-        sound.playClick();
+        sound.playOrbitMotion();
 
         if (id === AAYU_CORE_STAR.id) {
           setSelectedBody(AAYU_CORE_STAR);
@@ -637,6 +676,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
+      if (!isInteractiveRef.current && activeSectionRef.current !== 'hero') return;
 
       const delta = clock.getDelta();
       const time = clock.getElapsedTime();
@@ -728,7 +768,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
         entry.sprite.material.opacity = targetOpacity;
         (entry.orbitLine.material as THREE.LineBasicMaterial).opacity = lineOpacity;
         (entry.planetMesh.material as THREE.MeshStandardMaterial).emissiveIntensity =
-          isSelectedCategory ? 0.04 : 0.01;
+          isSelectedCategory ? 0.065 : 0.015;
       });
 
       // 4. Galaxy Dust Rotation
@@ -814,6 +854,10 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
       sunMat.dispose();
       sunInnerGeom.dispose();
       sunInnerMat.dispose();
+      sunAuraGeometry.dispose();
+      sunAuraMaterial.dispose();
+      planetAuraGeometry.dispose();
+      planetAuraMaterials.forEach((material) => material.dispose());
       surfaceTexturesRef.current.forEach((texture) => texture.dispose());
       surfaceTexturesRef.current = [];
       starGeom.dispose();
@@ -824,21 +868,21 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
 
   // Handler to smoothly fly to a specific celestial body
   const handleFlyToBody = (body: TechCelestialBody) => {
-    sound.playClick();
+    sound.playOrbitMotion();
     setSelectedBody(body);
     setCameraFocusedOnBody(body.id);
     targetCameraDistance.current = body.id === AAYU_CORE_STAR.id ? 8 : 4.5;
   };
 
   const handleResetCamera = () => {
-    sound.playClick();
+    sound.playOrbitMotion();
     setCameraFocusedOnBody(null);
     targetUserRotation.current = { x: 0.28, y: 0 };
-    targetCameraDistance.current = 30;
+    targetCameraDistance.current = 24;
   };
 
   const adjustCameraZoom = (amount: number) => {
-    sound.playClick();
+    sound.playOrbitMotion();
     targetCameraDistance.current = Math.max(
       2,
       Math.min(40, targetCameraDistance.current + amount)
@@ -887,7 +931,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
               <button
                 type="button"
                 onClick={() => {
-                  sound.playClick();
+                  sound.playOrbitMotion();
                   setHudMinimized(!hudMinimized);
                 }}
                 className="text-[10px] text-white/60 hover:text-white px-2 py-0.5 rounded bg-white/[0.04] border border-white/10 cursor-pointer font-mono shrink-0"
@@ -899,7 +943,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
             {!hudMinimized && (
               <>
                 <div className="text-[10px] sm:text-[11px] text-white/70 font-mono leading-tight mb-2">
-                  Orbiting languages, neural models, & systems created/mastered by{' '}
+                  Select a world to explore the languages, research areas, and tools behind{' '}
                   <span className="text-[#C6FF3D] font-semibold">Ayush Kaushik</span>.
                 </div>
 
@@ -908,7 +952,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
                   <button
                     type="button"
                     onClick={() => {
-                      sound.playClick();
+                      sound.playOrbitMotion();
                       setViewMode('SOLAR_SYSTEM');
                     }}
                     className={`py-1 px-1.5 rounded transition-all text-center border cursor-pointer ${
@@ -922,7 +966,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
                   <button
                     type="button"
                     onClick={() => {
-                      sound.playClick();
+                      sound.playOrbitMotion();
                       setViewMode('SPIRAL_GALAXY');
                     }}
                     className={`py-1 px-1.5 rounded transition-all text-center border cursor-pointer ${

@@ -38,7 +38,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <button
             type="button"
             onClick={() => {
-              sound.playClick();
+              sound.playGalaxyEnter();
               onOpenGalaxyLab?.();
             }}
             className="tracking-wider text-[#C6FF3D] hover:underline font-bold flex items-center gap-1.5 cursor-pointer bg-[#C6FF3D]/10 px-2 sm:px-2.5 py-1 rounded border border-[#C6FF3D]/30 text-[10px] sm:text-[11px]"
@@ -64,19 +64,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
           <div className="space-y-1 sm:space-y-1.5">
             <h1 className="text-4xl xs:text-5xl sm:text-6xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold tracking-[-0.065em] text-white leading-[1.02] break-words">
-              AYUSH <span className="text-[#C6FF3D] text-glow-lime">KAUSHIK</span>
+              AYUSH{' '}
+              <span className="bg-gradient-to-r from-[#B6FF5C] via-[#52D7F2] to-[#A88BFF] bg-clip-text text-transparent">
+                KAUSHIK
+              </span>
             </h1>
             <p className="text-base sm:text-xl lg:text-xl xl:text-2xl text-[#38bdf8] font-semibold tracking-[-0.025em]">
               Founder @ Adumate · Creator of AAYU
             </p>
           </div>
 
-          <p className="text-sm sm:text-base lg:text-base xl:text-lg text-white/85 font-normal max-w-2xl leading-relaxed">
-            Building intelligence closer to the metal — high-performance compiler runtimes, multi-provider quota failover engines, and distributed systems.
+          <p className="text-sm sm:text-base lg:text-base xl:text-lg text-white/90 font-normal max-w-2xl leading-relaxed">
+            I build compilers, AI infrastructure, and distributed systems—from language design and runtime internals to production-facing developer tools.
           </p>
 
           <p className="text-xs sm:text-sm text-white/65 max-w-xl leading-relaxed">
-            Self-taught systems engineer developing native hardware-level abstractions, zero-cost token routers, and open-source computational architectures.
+            Creator of the AAYU language project and founder of Adumate. Currently studying mathematics and turning systems research into working prototypes.
           </p>
 
           {/* Action CTAs */}
@@ -84,7 +87,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <button
               type="button"
               onClick={() => {
-                sound.playClick();
+                sound.playGalaxyEnter();
                 onOpenGalaxyLab?.();
               }}
               className="px-3.5 py-2 sm:px-5 sm:py-2.5 lg:py-2.5 xl:py-3 bg-[#C6FF3D] hover:bg-[#d6ff66] text-[#0B0D10] font-mono text-xs sm:text-sm font-bold tracking-wider rounded-sm transition-all shadow-[0_0_25px_rgba(198,255,61,0.45)] hover:shadow-[0_0_35px_rgba(198,255,61,0.65)] cursor-pointer flex items-center space-x-2"
@@ -132,7 +135,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
         {/* Right Verified Technical Status Identity Card (5 cols) */}
         <div className="lg:col-span-5 w-full">
-          <div className="relative bg-[#10141A]/90 border border-white/10 p-4 sm:p-5 lg:p-4.5 xl:p-6 rounded-sm backdrop-blur-md shadow-2xl hover:border-[#C6FF3D]/40 transition-all duration-300 group">
+          <div className="relative bg-[#0A1019]/95 border border-white/[0.12] p-4 sm:p-5 lg:p-4.5 xl:p-6 rounded-2xl backdrop-blur-xl shadow-[0_22px_80px_rgba(0,0,0,0.42)] hover:border-[#B6FF5C]/40 transition-all duration-300 group">
             {/* Corner cybernetic accents */}
             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#C6FF3D]" />
             <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#C6FF3D]" />
@@ -144,26 +147,26 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0 flex-1">
                 {/* Authentic 3D Animated Avatar Logo */}
                 <div className="relative group/avatar cursor-pointer shrink-0">
-                  <AyushAvatarLogo variant="badge" size={48} interactive={true} showControls={false} />
+                  <AyushAvatarLogo variant="badge" size={56} interactive={true} showControls={false} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-sm font-bold text-white tracking-wide flex items-center gap-1.5 flex-wrap">
                     <span className="truncate">{PROFILE_DATA.name}</span>
                     <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#C6FF3D]/10 text-[#C6FF3D] border border-[#C6FF3D]/30 shrink-0">
-                      3D AVATAR
+                      SYSTEMS BUILDER
                     </span>
                   </h2>
                   <div className="text-[10.5px] sm:text-[11px] font-mono text-[#C6FF3D] truncate">
-                    NODE: AK-DELHI-01 · {PROFILE_DATA.pronouns}
+                    {PROFILE_DATA.roleLine}
                   </div>
                   <div className="text-[10px] font-mono text-white/50 mt-0.5 truncate">
-                    Creator: AAYU Lang · Founder: Adumate
+                    {PROFILE_DATA.founderIdentity}
                   </div>
                 </div>
               </div>
 
               <div className="text-right shrink-0">
-                <span className="text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded bg-[#C6FF3D]/10 border border-[#C6FF3D]/30 text-[#C6FF3D] font-bold">
+                <span className="text-[9px] sm:text-[10px] font-mono px-2.5 py-1 rounded-full bg-[#B6FF5C]/10 border border-[#B6FF5C]/30 text-[#B6FF5C] font-bold">
                   FOUNDER
                 </span>
                 <div className="text-[9.5px] sm:text-[10px] font-mono text-white/40 mt-1">
@@ -195,7 +198,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               </div>
               <div className="flex items-start justify-between py-1 border-b border-white/5 gap-2">
                 <span className="text-white/40 shrink-0">RESEARCH FOCUS</span>
-                <span className="text-[#C6FF3D] text-right text-[11px]">
+                <span className="text-[#B6FF5C] text-right text-[11px]">
                   AAYU LANG · I2S · COMPILERS
                 </span>
               </div>
@@ -204,17 +207,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             {/* GitHub Achievements Badges */}
             <div className="pt-2">
               <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2 flex items-center justify-between">
-                <span>GITHUB IDENTITY METRICS</span>
-                <span className="text-white/60">
-                  {PROFILE_DATA.githubStats.followers} followers · {PROFILE_DATA.githubStats.following} following
-                </span>
+                <span>PUBLIC GITHUB PROFILE</span>
+                <a
+                  href={PROFILE_DATA.links.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#52D7F2] hover:text-white transition-colors"
+                >
+                  VIEW PROFILE ↗
+                </a>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-[10.5px] sm:text-[11px] font-mono">
                 {PROFILE_DATA.githubStats.achievements.map((ach) => (
                   <div
                     key={ach.name}
-                    className="p-1.5 rounded bg-white/[0.02] border border-white/5 flex items-center justify-between"
+                    className="p-2 rounded-lg bg-white/[0.025] border border-white/[0.06] flex items-center justify-between"
                   >
                     <span className="text-white/80 truncate mr-1">{ach.name}</span>
                     <span className="text-[#C6FF3D] text-[10px] shrink-0">★</span>
@@ -225,8 +233,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             {/* Honest verification footer */}
             <div className="mt-3 pt-2.5 border-t border-white/5 text-[10px] font-mono text-white/40 flex items-center justify-between">
-              <span>[VERIFIED IDENTITY NODE]</span>
-              <span className="text-[#4CC9F0]">RECEIPTS ONLY</span>
+              <span>DELHI, INDIA · {PROFILE_DATA.pronouns}</span>
+              <span className="text-[#52D7F2]">OPEN SOURCE ↗</span>
             </div>
           </div>
         </div>

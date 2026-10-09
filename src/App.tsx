@@ -123,8 +123,12 @@ export default function App() {
         className={
           isGalaxyLabOpen
             ? 'fixed inset-0 z-30 pointer-events-auto bg-[#07090D]'
-            : 'fixed inset-0 z-0 pointer-events-none'
+            : 'fixed inset-0 z-0 pointer-events-none transition-opacity duration-700'
         }
+        style={{
+          opacity: isGalaxyLabOpen ? 1 : activeSection === 'hero' ? 0.2 : 0.045,
+          filter: isGalaxyLabOpen ? 'none' : 'saturate(0.82)',
+        }}
       >
         <NeuralCoreScene
           reducedMotion={reducedMotion}

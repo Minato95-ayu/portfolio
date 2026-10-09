@@ -46,13 +46,13 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
   const botTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const botWorker = useRef<Worker | null>(null);
   const gameContainer = useRef<HTMLDivElement | null>(null);
-  const BOT_MOVE_DELAY_MS = 180;
+  const BOT_MOVE_DELAY_MS = 80;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [position, setPosition] = useState<string>(getInitialPosition);
   const [history, setHistory] = useState<{ position: string; move: Move }[]>([]);
   const [selectedSquare, setSelectedSquare] = useState<[number, number] | null>(null);
   const [validMoves, setValidMoves] = useState<Move[]>([]);
-  const [difficulty, setDifficulty] = useState<number>(3);
+  const [difficulty, setDifficulty] = useState<number>(5);
   const [isBotThinking, setIsBotThinking] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('White to move. Select a piece to play.');
   const [lastSearch, setLastSearch] = useState<SearchResult | null>(null);
@@ -79,17 +79,10 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
     .filter(({ move }) => move.captured?.color === 'w')
     .reduce((points, { move }) => points + (move.captured ? PIECE_POINTS[move.captured.type] : 0), 0);
 
-  const effectiveBotDepth = useCallback((level: number) => {
-    if (typeof navigator !== 'undefined' && navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) {
-      return Math.min(level, 2);
-    }
-    return level;
-  }, []);
-
   // Execute AI Bot move
   const triggerBotMove = useCallback((currentPosition: string) => {
     setIsBotThinking(true);
-    setStatusMessage('AAYU is searching legal continuations with alpha-beta pruning...');
+    setStatusMessage('AAYU is calculating its move and predicting your strongest reply...');
 
     botTimer.current = setTimeout(() => {
       botTimer.current = null;
@@ -154,7 +147,7 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
         worker.postMessage({
           position: currentPosition,
           color: 'b',
-          depth: effectiveBotDepth(difficulty),
+          depth: difficulty,
         });
       } catch (error) {
         worker.terminate();
@@ -163,7 +156,7 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
         setStatusMessage(`Could not send position to bot worker: ${error instanceof Error ? error.message : String(error)}`);
       }
     }, BOT_MOVE_DELAY_MS);
-  }, [difficulty, effectiveBotDepth, priorPositions]);
+  }, [difficulty, priorPositions]);
 
   useEffect(() => () => {
     if (botTimer.current) clearTimeout(botTimer.current);
@@ -280,11 +273,11 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <span>NEURAL CHESS / BOT ENGINE</span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#C6FF3D]/10 text-[#C6FF3D] border border-[#C6FF3D]/30">
-                ALPHA-BETA MINIMAX
+                ITERATIVE ALPHA-BETA
               </span>
             </h3>
             <p className="text-[11px] font-mono text-white/50">
-              Legal chess rules · capture-aware search · position evaluation
+              Legal chess rules · cached search · predicted opponent replies
             </p>
           </div>
         </div>
@@ -293,9 +286,9 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
         <div className="flex flex-wrap items-center gap-1.5 sm:space-x-2 text-xs font-mono">
           <span className="text-white/40 text-[11px]">DEPTH:</span>
           {[
-            { label: 'FAST · 1 PLY', val: 1 },
-            { label: 'TACTICAL · 2 PLY', val: 2 },
-            { label: 'STRONG · 3 PLY', val: 3 },
+            { label: 'FAST · UP TO 2 PLY', val: 2 },
+            { label: 'TACTICAL · UP TO 3 PLY', val: 3 },
+            { label: 'STRONG · UP TO 5 PLY', val: 5 },
           ].map((d) => (
             <button
               key={d.val}
@@ -486,6 +479,11 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
                         ? 'Gives check and narrows the opponent’s legal replies.'
                         : 'Selected as the best-scoring move in the searched lines.'}
                 </div>
+                {lastSearch.predictedReply && (
+                  <div className="text-[10px] text-white/70">
+                    Predicted best reply: {lastSearch.predictedReply.notation}
+                  </div>
+                )}
                 <div className="text-[10px] text-white/40">
                   Depth {lastSearch.depth} · {lastSearch.nodes.toLocaleString()} positions searched · eval {(lastSearch.score / 100).toFixed(2)} pawns (White POV)
                 </div>
