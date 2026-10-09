@@ -102,6 +102,10 @@ export function getPieceMoves(position: string, row: number, column: number): Mo
     .map(fromChessMove);
 }
 
+export function getLegalMoves(position: string): Move[] {
+  return (new Chess(position).moves({ verbose: true }) as ChessMove[]).map(fromChessMove);
+}
+
 export function applyMove(position: string, move: Move): string {
   const chess = new Chess(position);
   chess.move({

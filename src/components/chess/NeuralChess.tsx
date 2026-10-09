@@ -52,7 +52,7 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
   const [history, setHistory] = useState<{ position: string; move: Move }[]>([]);
   const [selectedSquare, setSelectedSquare] = useState<[number, number] | null>(null);
   const [validMoves, setValidMoves] = useState<Move[]>([]);
-  const [difficulty, setDifficulty] = useState<number>(5);
+  const [difficulty, setDifficulty] = useState<number>(6);
   const [isBotThinking, setIsBotThinking] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('White to move. Select a piece to play.');
   const [lastSearch, setLastSearch] = useState<SearchResult | null>(null);
@@ -82,7 +82,7 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
   // Execute AI Bot move
   const triggerBotMove = useCallback((currentPosition: string) => {
     setIsBotThinking(true);
-    setStatusMessage('AAYU is calculating its move and predicting your strongest reply...');
+    setStatusMessage('Stockfish is calculating its strongest move...');
 
     botTimer.current = setTimeout(() => {
       botTimer.current = null;
@@ -146,8 +146,8 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
       try {
         worker.postMessage({
           position: currentPosition,
-          color: 'b',
           depth: difficulty,
+          baseUrl: import.meta.env.BASE_URL,
         });
       } catch (error) {
         worker.terminate();
@@ -273,11 +273,37 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <span>NEURAL CHESS / BOT ENGINE</span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#C6FF3D]/10 text-[#C6FF3D] border border-[#C6FF3D]/30">
-                ITERATIVE ALPHA-BETA
+                STOCKFISH NNUE
               </span>
             </h3>
             <p className="text-[11px] font-mono text-white/50">
-              Legal chess rules · cached search · predicted opponent replies
+              Legal chess rules · Stockfish 19 NNUE ·{' '}
+              <a
+                href={`${import.meta.env.BASE_URL}chess/COPYING.txt`}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2 hover:text-[#C6FF3D]"
+              >
+                GPLv3 license
+              </a>
+              {' · '}
+              <a
+                href="https://github.com/official-stockfish/Stockfish"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2 hover:text-[#C6FF3D]"
+              >
+                engine source
+              </a>
+              {' · '}
+              <a
+                href="https://github.com/nmrugg/stockfish.js"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2 hover:text-[#C6FF3D]"
+              >
+                worker source
+              </a>
             </p>
           </div>
         </div>
@@ -286,9 +312,9 @@ export const NeuralChess: React.FC<NeuralChessProps> = ({ onClose }) => {
         <div className="flex flex-wrap items-center gap-1.5 sm:space-x-2 text-xs font-mono">
           <span className="text-white/40 text-[11px]">DEPTH:</span>
           {[
-            { label: 'FAST · UP TO 2 PLY', val: 2 },
-            { label: 'TACTICAL · UP TO 3 PLY', val: 3 },
-            { label: 'STRONG · UP TO 5 PLY', val: 5 },
+            { label: 'FAST · UP TO 6 PLY', val: 2 },
+            { label: 'TACTICAL · UP TO 10 PLY', val: 3 },
+            { label: 'STRONG · UP TO 18 PLY', val: 6 },
           ].map((d) => (
             <button
               key={d.val}
