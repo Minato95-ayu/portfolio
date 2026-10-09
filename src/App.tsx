@@ -7,6 +7,7 @@ import { YouTubeStrip } from './components/media/YouTubeStrip.tsx';
 import { AboutSection } from './components/about/AboutSection.tsx';
 import { ExpertiseSection } from './components/expertise/ExpertiseSection.tsx';
 import { ProjectArchitectureShowcase } from './components/projects/ProjectArchitectureShowcase.tsx';
+import { LLMProviderShowcase } from './components/projects/LLMProviderShowcase.tsx';
 import { ChessSection } from './components/chess/ChessSection.tsx';
 import { ConnectSection } from './components/connect/ConnectSection.tsx';
 import { SiteFooter } from './components/layout/SiteFooter.tsx';
@@ -73,7 +74,7 @@ export default function App() {
 
   // ScrollSpy to track active section for navigation
   useEffect(() => {
-    const sections = ['hero', 'galaxy', 'chess', 'systems', 'about', 'expertise', 'connect'];
+    const sections = ['hero', 'galaxy', 'chess', 'systems', 'ai-providers', 'about', 'expertise', 'connect'];
     const handleScroll = () => {
       const scrollPos = window.scrollY + 200;
       for (const sectionId of sections) {
@@ -188,6 +189,7 @@ export default function App() {
         />
         <ChessSection />
         <ProjectArchitectureShowcase onSelectProject={openProjectDetail} />
+        <LLMProviderShowcase onOpenChat={() => setChatOpen(true)} />
         <YouTubeStrip />
         <AboutSection />
         <ExpertiseSection />

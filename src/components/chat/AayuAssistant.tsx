@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { sound } from '../../utils/audio.ts';
 import { IconNeural } from '../ui/Icons.tsx';
 import { AyushAvatarLogo } from '../ui/AyushAvatarLogo.tsx';
+import { CHAT_PROVIDERS } from '../../data/chatProviders.ts';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -131,7 +132,7 @@ export const AayuAssistant: React.FC<{ onClose: () => void }> = ({ onClose }) =>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Free Provider Selector */}
+          {/* Inference Provider Selector */}
           <select
             value={selectedProvider}
             onChange={(e) => {
@@ -140,13 +141,14 @@ export const AayuAssistant: React.FC<{ onClose: () => void }> = ({ onClose }) =>
             }}
             aria-label="Select AI Inference Provider"
             className="bg-[#0c1017] border border-white/20 text-[#C6FF3D] text-[10px] font-mono rounded px-1.5 py-1 outline-none cursor-pointer hover:border-[#C6FF3D] max-w-[125px] sm:max-w-none"
-            title="Select an inference provider; configured providers are tried automatically when needed"
+            title="Choose a configured inference provider or use automatic fallback"
           >
-            <option value="auto">⚡ Auto Failover</option>
-            <option value="groq">Groq (Llama 3.3)</option>
-            <option value="openrouter">OpenRouter Free</option>
-            <option value="mistral">Mistral Small</option>
-            <option value="cerebras">Cerebras CS-3</option>
+            <option value="auto">⚡ Auto / fallback</option>
+            {CHAT_PROVIDERS.map((provider) => (
+              <option key={provider.id} value={provider.id}>
+                {provider.name} · {provider.role}
+              </option>
+            ))}
           </select>
 
           <button

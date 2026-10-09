@@ -188,7 +188,7 @@ struct I2SControlWord {
     whatToBuildNext:
       'Global multi-region failover mesh, client SDKs, and local-first caching edge node.',
     architectureNotes:
-      'Client Request -> Adumate Gateway -> Latency & Quota Scoring Engine -> Token Bucket Dispatcher (configured provider free tiers) -> Response Stream.',
+      'Client Request -> Adumate Gateway -> Provider Configuration -> Server-Side Inference & Fallback -> Response Stream.',
     stack: ['TypeScript', 'Node.js', 'Go', 'Next.js', 'PostgreSQL', 'Redis', 'Docker'],
     sprint7Day: [
       { day: 'Day 1', task: 'Define provider configuration and capability matrix for the router.' },

@@ -3,49 +3,24 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ALL_PROJECTS, PROFILE_DATA } from './src/data/projectsData.ts';
-
-interface ChatProvider {
-  id: string;
-  name: string;
-  baseURL: string;
-  model: string;
-  envKeyName: string;
-}
+import { CHAT_PROVIDERS } from './src/data/chatProviders.ts';
 
 interface ChatCompletionResponse {
   choices?: { message?: { content?: string | null } }[];
 }
 
-const CHAT_PROVIDERS: ChatProvider[] = [
-  {
-    id: 'groq',
-    name: 'Groq',
-    baseURL: 'https://api.groq.com/openai/v1',
-    model: 'llama-3.3-70b-versatile',
-    envKeyName: 'GROQ_API_KEY',
-  },
-  {
-    id: 'openrouter',
-    name: 'OpenRouter',
-    baseURL: 'https://openrouter.ai/api/v1',
-    model: 'meta-llama/llama-3.3-70b-instruct:free',
-    envKeyName: 'OPENROUTER_API_KEY',
-  },
-  {
-    id: 'mistral',
-    name: 'Mistral',
-    baseURL: 'https://api.mistral.ai/v1',
-    model: 'mistral-small-latest',
-    envKeyName: 'MISTRAL_API_KEY',
-  },
-  {
-    id: 'cerebras',
-    name: 'Cerebras',
-    baseURL: 'https://api.cerebras.ai/v1',
-    model: 'llama3.1-8b',
-    envKeyName: 'CEREBRAS_API_KEY',
-  },
-];
+const PROVIDER_ENV_KEYS: Record<(typeof CHAT_PROVIDERS)[number]['id'], string> = {
+  groq: 'GROQ_API_KEY',
+  openrouter: 'OPENROUTER_API_KEY',
+  mistral: 'MISTRAL_API_KEY',
+  cerebras: 'CEREBRAS_API_KEY',
+};
+
+const CONFIGURED_CHAT_PROVIDERS = CHAT_PROVIDERS.map((provider) => ({
+  ...provider,
+  envKeyName: PROVIDER_ENV_KEYS[provider.id],
+}));
+type ChatProvider = (typeof CONFIGURED_CHAT_PROVIDERS)[number];
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -152,7 +127,7 @@ app.post('/api/chat', async (req: Request, res: Response) => {
     return;
   }
 
-  if (preferredProvider && preferredProvider !== 'auto' && !CHAT_PROVIDERS.some((provider) => provider.id === preferredProvider)) {
+  if (preferredProvider && preferredProvider !== 'auto' && !CONFIGURED_CHAT_PROVIDERS.some((provider) => provider.id === preferredProvider)) {
     res.status(400).json({ error: 'Unsupported provider selected' });
     return;
   }
@@ -243,7 +218,7 @@ Rules:
 
   // 1. If explicit provider chosen
   if (preferredProvider && preferredProvider !== 'auto') {
-    const prov = CHAT_PROVIDERS.find((p) => p.id === preferredProvider);
+    const prov = CONFIGURED_CHAT_PROVIDERS.find((p) => p.id === preferredProvider);
     if (prov) {
       const text = await callCompatibleProvider(prov);
       if (text) {
@@ -254,7 +229,7 @@ Rules:
   }
 
   // Try configured inference providers in order
-  for (const provider of CHAT_PROVIDERS) {
+  for (const provider of CONFIGURED_CHAT_PROVIDERS) {
     const replyText = await callCompatibleProvider(provider);
     if (replyText) {
       res.json({ reply: replyText, source: `${provider.name} (${provider.model})` });

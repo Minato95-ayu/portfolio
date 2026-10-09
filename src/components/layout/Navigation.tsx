@@ -46,6 +46,7 @@ export const Navigation: React.FC<NavigationProps> = ({
     { label: '3D GALAXY', href: '#galaxy', id: 'galaxy' },
     { label: 'CHESS', href: '#chess', id: 'chess' },
     { label: 'PROJECTS', href: '#systems', id: 'systems' },
+    { label: 'AI ROUTER', href: '#ai-providers', id: 'ai-providers' },
     { label: 'ABOUT AYUSH', href: '#about', id: 'about' },
     { label: 'EXPERTISE', href: '#expertise', id: 'expertise' },
     { label: 'CONNECT', href: '#connect', id: 'connect' },
