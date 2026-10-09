@@ -24,12 +24,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       {/* Top HUD Readouts */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-4 pt-2 sm:pt-3 text-[10.5px] sm:text-[11px] font-mono text-white/50 border-b border-white/[0.08] pb-3">
         <div className="flex items-center space-x-2 sm:space-x-3 overflow-hidden">
-          <span className="text-[#C6FF3D] font-semibold tracking-wider flex items-center gap-1.5 shrink-0">
+          <span className="text-[#C6FF3D] font-semibold tracking-wider flex items-center gap-1.5 shrink-0 uppercase">
             <span className="w-1.5 h-1.5 bg-[#C6FF3D] rounded-full animate-pulse" />
             AYUSH KAUSHIK
           </span>
           <span className="text-white/20">|</span>
-          <span className="tracking-wider text-white/70 truncate">
+          <span className="tracking-wider text-white/70 truncate uppercase">
             SYSTEMS ARCHITECT · FOUNDER @ ADUMATE
           </span>
         </div>
@@ -41,15 +41,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               sound.playGalaxyEnter();
               onOpenGalaxyLab?.();
             }}
-            className="tracking-wider text-[#C6FF3D] hover:underline font-bold flex items-center gap-1.5 cursor-pointer bg-[#C6FF3D]/10 px-2 sm:px-2.5 py-1 rounded border border-[#C6FF3D]/30 text-[10px] sm:text-[11px]"
+            className="tracking-wider text-[#0B0D10] hover:underline font-bold flex items-center gap-1.5 cursor-pointer bg-[#C6FF3D] px-2 sm:px-2.5 py-1 rounded border border-[#C6FF3D]/40 text-[10px] sm:text-[11px] shadow-[0_0_20px_rgba(198,255,61,0.35)] uppercase"
           >
             <span>🪐</span>
             <span>3D TECH SOLAR SYSTEM LIVE</span>
           </button>
-          <span className="text-white/20 hidden md:inline">|</span>
-          <span className="tracking-wider text-white/40 hidden md:inline">
-            DRAG 3D ORBITS · CLICK ANY PLANET
-          </span>
         </div>
       </div>
 
@@ -63,7 +59,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
 
           <div className="space-y-1 sm:space-y-1.5 hero-copy">
-            <h1 className="hero-title text-4xl xs:text-5xl sm:text-6xl lg:text-[7rem] xl:text-[8rem] 2xl:text-[9rem] font-extrabold tracking-[-0.09em] text-white leading-[0.82] break-words">
+            <h1 className="hero-title text-[3.7rem] xs:text-[4.5rem] sm:text-[5.3rem] lg:text-[7.2rem] xl:text-[8.3rem] 2xl:text-[9.2rem] font-extrabold tracking-[-0.085em] text-white leading-[0.8] break-words">
               AYUSH{' '}
               <span className="hero-name-gradient bg-gradient-to-r from-[#B6FF5C] via-[#52D7F2] to-[#A88BFF] bg-clip-text text-transparent">
                 KAUSHIK
@@ -90,7 +86,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 sound.playGalaxyEnter();
                 onOpenGalaxyLab?.();
               }}
-              className="px-3.5 py-2 sm:px-5 sm:py-2.5 lg:py-2.5 xl:py-3 bg-[#C6FF3D] hover:bg-[#d6ff66] text-[#0B0D10] font-mono text-xs sm:text-sm font-bold tracking-wider rounded-sm transition-all shadow-[0_0_25px_rgba(198,255,61,0.45)] hover:shadow-[0_0_35px_rgba(198,255,61,0.65)] cursor-pointer flex items-center space-x-2"
+              className="px-3.5 py-2 sm:px-5 sm:py-2.5 lg:py-2.5 xl:py-3 bg-[#C6FF3D] hover:bg-[#d6ff66] text-[#0B0D10] font-mono text-xs sm:text-sm font-bold tracking-wider rounded-sm transition-all shadow-[0_0_25px_rgba(198,255,61,0.45)] hover:shadow-[0_0_35px_rgba(198,255,61,0.65)] cursor-pointer flex items-center space-x-2 uppercase"
             >
               <span>🪐 3D SOLAR SYSTEM</span>
               <span className="text-[10px] bg-[#0B0D10]/20 px-1.5 py-0.5 rounded font-mono">EXPLORE</span>
@@ -102,7 +98,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 sound.playClick();
                 onExploreSystems();
               }}
-              className="px-3.5 py-2 sm:px-4 sm:py-2.5 lg:py-2.5 xl:py-3 border border-white/20 hover:border-[#4CC9F0] text-white/90 hover:text-[#4CC9F0] font-mono text-xs font-medium tracking-wider rounded-sm transition-all bg-white/[0.02] hover:bg-[#4CC9F0]/10 flex items-center space-x-2 cursor-pointer"
+              className="px-3.5 py-2 sm:px-4 sm:py-2.5 lg:py-2.5 xl:py-3 border border-white/20 hover:border-[#4CC9F0] text-white/90 hover:text-[#4CC9F0] font-mono text-xs font-medium tracking-wider rounded-sm transition-all bg-white/[0.02] hover:bg-[#4CC9F0]/10 flex items-center space-x-2 cursor-pointer uppercase"
             >
               <span>FLAGSHIP SYSTEMS</span>
               <span>↓</span>
@@ -114,7 +110,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 sound.playClick();
                 onExploreLab();
               }}
-              className="px-3 py-2 sm:px-3.5 sm:py-2.5 lg:py-2.5 xl:py-3 border border-white/10 hover:border-white/30 text-white/70 hover:text-white font-mono text-xs font-medium tracking-wider rounded-sm transition-all bg-white/[0.02] hover:bg-white/5 flex items-center space-x-2 cursor-pointer"
+              className="px-3 py-2 sm:px-3.5 sm:py-2.5 lg:py-2.5 xl:py-3 border border-white/10 hover:border-white/30 text-white/70 hover:text-white font-mono text-xs font-medium tracking-wider rounded-sm transition-all bg-white/[0.02] hover:bg-white/5 flex items-center space-x-2 cursor-pointer uppercase"
             >
               <span>RESEARCH LAB</span>
               <span>→</span>
@@ -125,7 +121,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => sound.playClick()}
-              className="px-3 py-2 sm:px-3.5 sm:py-2.5 lg:py-2.5 xl:py-3 border border-white/10 hover:border-white/30 text-white/70 hover:text-white font-mono text-xs tracking-wider rounded-sm transition-all hover:bg-white/5 flex items-center space-x-2"
+              className="px-3 py-2 sm:px-3.5 sm:py-2.5 lg:py-2.5 xl:py-3 border border-white/10 hover:border-white/30 text-white/70 hover:text-white font-mono text-xs tracking-wider rounded-sm transition-all hover:bg-white/5 flex items-center space-x-2 uppercase"
             >
               <IconGitHub size={16} />
               <span>GITHUB</span>
