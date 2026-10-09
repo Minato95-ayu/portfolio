@@ -3,7 +3,49 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ALL_PROJECTS, PROFILE_DATA } from './src/data/projectsData.ts';
-import { AWESOME_FREE_LLM_PROVIDERS } from './src/data/freeLlmApis.ts';
+
+interface ChatProvider {
+  id: string;
+  name: string;
+  baseURL: string;
+  model: string;
+  envKeyName: string;
+}
+
+interface ChatCompletionResponse {
+  choices?: { message?: { content?: string | null } }[];
+}
+
+const CHAT_PROVIDERS: ChatProvider[] = [
+  {
+    id: 'groq',
+    name: 'Groq',
+    baseURL: 'https://api.groq.com/openai/v1',
+    model: 'llama-3.3-70b-versatile',
+    envKeyName: 'GROQ_API_KEY',
+  },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    baseURL: 'https://openrouter.ai/api/v1',
+    model: 'meta-llama/llama-3.3-70b-instruct:free',
+    envKeyName: 'OPENROUTER_API_KEY',
+  },
+  {
+    id: 'mistral',
+    name: 'Mistral',
+    baseURL: 'https://api.mistral.ai/v1',
+    model: 'mistral-small-latest',
+    envKeyName: 'MISTRAL_API_KEY',
+  },
+  {
+    id: 'cerebras',
+    name: 'Cerebras',
+    baseURL: 'https://api.cerebras.ai/v1',
+    model: 'llama3.1-8b',
+    envKeyName: 'CEREBRAS_API_KEY',
+  },
+];
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -98,17 +140,7 @@ app.get('/api/projects/:slug', (req: Request, res: Response) => {
   res.json({ project });
 });
 
-// GET /api/free-llms
-app.get('/api/free-llms', (_req: Request, res: Response) => {
-  res.json({
-    total: AWESOME_FREE_LLM_PROVIDERS.length,
-    source: 'https://github.com/mnfst/awesome-free-llm-apis',
-    description: 'Curated list of permanently free LLM APIs for Adumate rotation & zero-cost execution',
-    providers: AWESOME_FREE_LLM_PROVIDERS,
-  });
-});
-
-// POST /api/chat (AI Assistant for AAYU Portfolio with mnfst/awesome-free-llm-apis multi-provider rotation)
+// POST /api/chat (AI Assistant for AAYU Portfolio with configured provider failover)
 app.post('/api/chat', async (req: Request, res: Response) => {
   const rawMessage = req.body?.message;
   const rawPreferredProvider = req.body?.preferredProvider;
@@ -120,14 +152,14 @@ app.post('/api/chat', async (req: Request, res: Response) => {
     return;
   }
 
-  if (preferredProvider && preferredProvider !== 'auto' && !AWESOME_FREE_LLM_PROVIDERS.some((provider) => provider.id === preferredProvider)) {
+  if (preferredProvider && preferredProvider !== 'auto' && !CHAT_PROVIDERS.some((provider) => provider.id === preferredProvider)) {
     res.status(400).json({ error: 'Unsupported provider selected' });
     return;
   }
 
   const systemPrompt = `You are "Ask AAYU", the interactive AI assistant for Ayush Kaushik's cinematic 3D portfolio (https://adumate.in).
 Your role is to explain Ayush's research, engineering architecture, background, and public work with technical precision and zero hype.
-Integrated via Adumate and powered by the mnfst/awesome-free-llm-apis provider rotation network.
+Responses use a configured provider when available, otherwise the built-in knowledge base.
 
 VERIFIED FACTS ABOUT AYUSH KAUSHIK / AAYU:
 - Name: Ayush Kaushik (also Ayushh Kaushiq, he/him)
@@ -143,7 +175,7 @@ VERIFIED FACTS ABOUT AYUSH KAUSHIK / AAYU:
 - Flagship Systems Built From Scratch:
   1. AAYU Programming Language: Deterministic memory management, zero-cost neural tensor bindings, AST parser in Rust, LLVM/MLIR lowering pipeline
   2. Intent-to-Silicon (I2S) Research: Direct compilation of declarative neural intent to hardware instruction set micro-ops without VM/driver runtime overhead
-  3. Adumate Platform: Production platform at adumate.in featuring AI API rotation (powered by mnfst/awesome-free-llm-apis), latency-aware provider failover, service discovery, and privacy mesh
+  3. Adumate Platform: Founder-led platform at adumate.in exploring multi-provider AI routing, latency-aware failover, service discovery, and privacy-focused infrastructure
 - Core Public Repositories:
   1. EUREKA: AI-powered virtual research lab (multimodal, 3D simulations with Three.js, MediaPipe gesture, RDKit, Docker)
   2. job-finder: Career intelligence with ATS semantic parser, Redis vector cache, and scam heuristics
@@ -170,10 +202,9 @@ Rules:
 - For questions about skills, education, location, repositories, research, contact, or chess, use the matching facts above and give a useful direct answer.
 - If asked about playing chess, point the user to the integrated Neural Chess engine on the page!`;
 
-  // Helper function to call OpenAI-compatible free providers (Groq, OpenRouter, etc.)
-  const callCompatibleProvider = async (provider: typeof AWESOME_FREE_LLM_PROVIDERS[0]): Promise<string | null> => {
+  const callCompatibleProvider = async (provider: ChatProvider): Promise<string | null> => {
     const key = process.env[provider.envKeyName];
-    if (!key || key.includes('MY_') || !provider.isOpenAICompatible) return null;
+    if (!key || key.includes('MY_')) return null;
     try {
       const fetchController = new AbortController();
       const timeoutId = setTimeout(() => fetchController.abort(), 6000);
@@ -185,7 +216,7 @@ Rules:
           Authorization: `Bearer ${key}`,
         },
         body: JSON.stringify({
-          model: provider.recommendedModel,
+          model: provider.model,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: message },
@@ -197,8 +228,9 @@ Rules:
       clearTimeout(timeoutId);
 
       if (response.ok) {
-        const data = (await response.json()) as any;
-        return data.choices?.[0]?.message?.content || null;
+        const data = (await response.json()) as ChatCompletionResponse;
+        const content = data.choices?.[0]?.message?.content;
+        return typeof content === 'string' ? content : null;
       } else {
         const errText = await response.text();
         console.warn(`[FAILOVER] Provider ${provider.name} returned HTTP ${response.status}:`, errText.slice(0, 150));
@@ -211,21 +243,21 @@ Rules:
 
   // 1. If explicit provider chosen
   if (preferredProvider && preferredProvider !== 'auto') {
-    const prov = AWESOME_FREE_LLM_PROVIDERS.find((p) => p.id === preferredProvider);
+    const prov = CHAT_PROVIDERS.find((p) => p.id === preferredProvider);
     if (prov) {
       const text = await callCompatibleProvider(prov);
       if (text) {
-        res.json({ reply: text, source: `${prov.name} (${prov.recommendedModel})` });
+        res.json({ reply: text, source: `${prov.name} (${prov.model})` });
         return;
       }
     }
   }
 
-  // Try configured free LLM providers in rotation
-  for (const provider of AWESOME_FREE_LLM_PROVIDERS) {
+  // Try configured inference providers in order
+  for (const provider of CHAT_PROVIDERS) {
     const replyText = await callCompatibleProvider(provider);
     if (replyText) {
-      res.json({ reply: replyText, source: `${provider.name} (${provider.recommendedModel})` });
+      res.json({ reply: replyText, source: `${provider.name} (${provider.model})` });
       return;
     }
   }

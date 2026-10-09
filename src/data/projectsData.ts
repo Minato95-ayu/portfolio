@@ -178,20 +178,20 @@ struct I2SControlWord {
     title: 'Adumate Platform',
     category: 'FLAGSHIP SYSTEM',
     status: 'ACTIVE DIRECTION / FOUNDER',
-    tag: 'Free LLM Rotation & Service Mesh',
+    tag: 'Multi-Provider AI Routing & Service Mesh',
     summary:
-      'Founder-led production platform featuring zero-cost AI API rotation powered by mnfst/awesome-free-llm-apis, multi-provider failover, service discovery, and telemetry-free privacy gateway.',
+      'Founder-led platform focused on multi-provider AI routing, service discovery, and privacy-focused developer infrastructure.',
     researchQuestion:
       'How can dynamic latency-aware token rotation eliminate API rate limit throttling across distributed multi-tenant workloads without proprietary vendor lock-in?',
     whatExists:
-      'Production domain https://adumate.in, multi-provider API router architecture, mnfst/awesome-free-llm-apis integration matrix, load balancing heuristics, and developer gateway.',
+      'Production domain https://adumate.in, multi-provider API router architecture, load-balancing heuristics, and developer gateway.',
     whatToBuildNext:
       'Global multi-region failover mesh, client SDKs, and local-first caching edge node.',
     architectureNotes:
       'Client Request -> Adumate Gateway -> Latency & Quota Scoring Engine -> Token Bucket Dispatcher (configured provider free tiers) -> Response Stream.',
     stack: ['TypeScript', 'Node.js', 'Go', 'Next.js', 'PostgreSQL', 'Redis', 'Docker'],
     sprint7Day: [
-      { day: 'Day 1', task: 'Integrate mnfst/awesome-free-llm-apis catalog into provider matrix.' },
+      { day: 'Day 1', task: 'Define provider configuration and capability matrix for the router.' },
       { day: 'Day 2', task: 'Implement zero-telemetry client header validation & CORS proxy.' },
       { day: 'Day 3', task: 'Benchmark proxy latency under 5,000 req/min multi-provider load.' },
       { day: 'Day 4', task: 'Harden automatic fallback when upstream returns 429 quota exhaustion.' },
@@ -199,21 +199,16 @@ struct I2SControlWord {
       { day: 'Day 6', task: 'Build developer dashboard authentication and key generator.' },
       { day: 'Day 7', task: 'Document public API endpoints and client quickstart guide.' },
     ],
-    proofExpected: 'Production website https://adumate.in, API proxy documentation, and awesome-free-llm-apis provider matrix.',
+    proofExpected: 'Production website https://adumate.in, API proxy documentation, and provider integration matrix.',
     githubUrl: 'https://github.com/Minato95-ayu',
     externalUrl: 'https://adumate.in',
     color: '#C6FF3D',
     iconName: 'adumate',
-    codeSnippet: `// Adumate Router — Zero-Cost LLM Failover & Quota Mesh
-// Powered by mnfst/awesome-free-llm-apis curated tiers
+    codeSnippet: `// Adumate Router — Multi-Provider Failover
 const router = new AdumateRouter({
-  providers: [
-    { name: 'Groq', model: 'llama-3.3-70b-versatile', freeLimit: '14,400 req/day' },
-    { name: 'OpenRouter', model: 'llama-3.3-70b:free', freeLimit: '200 req/day' },
-    { name: 'Mistral', model: 'mistral-small-latest', freeLimit: '1 req/sec' },
-  ],
-  strategy: 'lowest_latency_fallback',
-  privacy: 'zero_retention_enforced'
+  providers: configuredProviders,
+  strategy: 'latency_aware_fallback',
+  privacy: 'minimize_retained_request_data'
 });
 const response = await router.dispatch(prompt);`,
   },

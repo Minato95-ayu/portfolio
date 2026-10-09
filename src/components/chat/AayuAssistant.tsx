@@ -140,7 +140,7 @@ export const AayuAssistant: React.FC<{ onClose: () => void }> = ({ onClose }) =>
             }}
             aria-label="Select AI Inference Provider"
             className="bg-[#0c1017] border border-white/20 text-[#C6FF3D] text-[10px] font-mono rounded px-1.5 py-1 outline-none cursor-pointer hover:border-[#C6FF3D] max-w-[125px] sm:max-w-none"
-            title="Powered by mnfst/awesome-free-llm-apis rotation"
+            title="Select an inference provider; configured providers are tried automatically when needed"
           >
             <option value="auto">⚡ Auto Failover</option>
             <option value="groq">Groq (Llama 3.3)</option>

@@ -3,13 +3,13 @@ import { NeuralCoreScene } from './components/scene/NeuralCoreScene.tsx';
 import { Navigation } from './components/layout/Navigation.tsx';
 import { HeroSection } from './components/hero/HeroSection.tsx';
 import { TechGalaxySection } from './components/galaxy/TechGalaxySection.tsx';
-import { FreeLlmApisSection } from './components/freeLlm/FreeLlmApisSection.tsx';
 import { YouTubeStrip } from './components/media/YouTubeStrip.tsx';
 import { AboutSection } from './components/about/AboutSection.tsx';
 import { ExpertiseSection } from './components/expertise/ExpertiseSection.tsx';
 import { ProjectArchitectureShowcase } from './components/projects/ProjectArchitectureShowcase.tsx';
 import { ChessSection } from './components/chess/ChessSection.tsx';
 import { ConnectSection } from './components/connect/ConnectSection.tsx';
+import { SiteFooter } from './components/layout/SiteFooter.tsx';
 import { ProjectDetailModal } from './components/projects/ProjectDetailModal.tsx';
 import { AayuAssistant } from './components/chat/AayuAssistant.tsx';
 import { ALL_PROJECTS, ProjectData } from './data/projectsData.ts';
@@ -73,7 +73,7 @@ export default function App() {
 
   // ScrollSpy to track active section for navigation
   useEffect(() => {
-    const sections = ['hero', 'galaxy', 'chess', 'systems', 'about', 'expertise', 'connect', 'free-llms'];
+    const sections = ['hero', 'galaxy', 'chess', 'systems', 'about', 'expertise', 'connect'];
     const handleScroll = () => {
       const scrollPos = window.scrollY + 200;
       for (const sectionId of sections) {
@@ -192,8 +192,9 @@ export default function App() {
         <AboutSection />
         <ExpertiseSection />
         <ConnectSection />
-        <FreeLlmApisSection onTestProvider={() => setChatOpen(true)} />
       </main>
+
+      <SiteFooter />
 
       {/* Project Detail Modal / Dedicated Route View */}
       {selectedProject && (

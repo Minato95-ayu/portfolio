@@ -10,7 +10,6 @@ import {
   IconYouTube,
 } from '../ui/Icons.tsx';
 import { sound } from '../../utils/audio.ts';
-import { AyushAvatarLogo } from '../ui/AyushAvatarLogo.tsx';
 
 const sanitizeContactField = (value: string, maxLength: number): string =>
   value.replace(/[\r\n\u0000-\u001F\u007F]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, maxLength);
@@ -349,35 +348,6 @@ export const ConnectSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Footer with 3D Face Avatar */}
-      <footer className="mt-24 pt-8 border-t border-white/[0.08] flex flex-col md:flex-row items-center justify-between text-xs font-mono text-white/50 gap-6">
-        <div className="flex items-center space-x-3.5">
-          <AyushAvatarLogo variant="icon" size={36} interactive={true} />
-          <div>
-            <div className="text-white font-bold tracking-wider">
-              AYUSH KAUSHIK · FOUNDER @ ADUMATE
-            </div>
-            <div className="text-[11px] text-white/40">
-              © {new Date().getFullYear()} · Intelligence closer to the metal
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-4 text-[11px]">
-          <span className="text-[#84cc16]">NODE: DELHI, IN</span>
-          <span>·</span>
-          <span>BRABU / NIELIT DELHI</span>
-          <span>·</span>
-          <a
-            href="https://adumate.in"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#4CC9F0] hover:underline"
-          >
-            adumate.in ↗
-          </a>
-        </div>
-      </footer>
     </section>
   );
 };

@@ -49,7 +49,6 @@ export const Navigation: React.FC<NavigationProps> = ({
     { label: 'ABOUT AYUSH', href: '#about', id: 'about' },
     { label: 'EXPERTISE', href: '#expertise', id: 'expertise' },
     { label: 'CONNECT', href: '#connect', id: 'connect' },
-    { label: 'FREE LLMS', href: '#free-llms', id: 'free-llms' },
   ];
 
   const handleLinkClick = (id: string) => {
