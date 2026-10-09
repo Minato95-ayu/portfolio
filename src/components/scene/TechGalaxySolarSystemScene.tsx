@@ -523,10 +523,10 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     worldGroup.add(starField);
 
     // Ambient and directional lighting for planet 3D depth
-    const ambientLight = new THREE.AmbientLight(0x53617e, 0.82);
+    const ambientLight = new THREE.AmbientLight(0x53617e, 0.9);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xc4e7ff, 0.48);
+    const dirLight = new THREE.DirectionalLight(0xc4e7ff, 0.56);
     dirLight.position.set(10, 20, 15);
     scene.add(dirLight);
 
