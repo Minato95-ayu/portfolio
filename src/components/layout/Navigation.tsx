@@ -45,11 +45,9 @@ export const Navigation: React.FC<NavigationProps> = ({
   const navLinks = [
     { label: '3D GALAXY', href: '#galaxy', id: 'galaxy' },
     { label: 'CHESS', href: '#chess', id: 'chess' },
-    { label: 'SYSTEMS', href: '#systems', id: 'systems' },
-    { label: 'LAB', href: '#lab', id: 'lab' },
+    { label: 'PROJECTS', href: '#systems', id: 'systems' },
     { label: 'ABOUT AYUSH', href: '#about', id: 'about' },
     { label: 'EXPERTISE', href: '#expertise', id: 'expertise' },
-    { label: 'PUBLIC WORK', href: '#public-work', id: 'public-work' },
     { label: 'CONNECT', href: '#connect', id: 'connect' },
     { label: 'FREE LLMS', href: '#free-llms', id: 'free-llms' },
   ];

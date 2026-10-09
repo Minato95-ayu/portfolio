@@ -3,13 +3,11 @@ import { NeuralCoreScene } from './components/scene/NeuralCoreScene.tsx';
 import { Navigation } from './components/layout/Navigation.tsx';
 import { HeroSection } from './components/hero/HeroSection.tsx';
 import { TechGalaxySection } from './components/galaxy/TechGalaxySection.tsx';
-import { FlagshipSystemsSection } from './components/flagship/FlagshipSystemsSection.tsx';
 import { FreeLlmApisSection } from './components/freeLlm/FreeLlmApisSection.tsx';
-import { ResearchLabSection } from './components/lab/ResearchLabSection.tsx';
 import { YouTubeStrip } from './components/media/YouTubeStrip.tsx';
 import { AboutSection } from './components/about/AboutSection.tsx';
 import { ExpertiseSection } from './components/expertise/ExpertiseSection.tsx';
-import { PublicWorkSection } from './components/publicwork/PublicWorkSection.tsx';
+import { ProjectArchitectureShowcase } from './components/projects/ProjectArchitectureShowcase.tsx';
 import { ChessSection } from './components/chess/ChessSection.tsx';
 import { ConnectSection } from './components/connect/ConnectSection.tsx';
 import { ProjectDetailModal } from './components/projects/ProjectDetailModal.tsx';
@@ -75,7 +73,7 @@ export default function App() {
 
   // ScrollSpy to track active section for navigation
   useEffect(() => {
-    const sections = ['hero', 'galaxy', 'chess', 'systems', 'lab', 'about', 'expertise', 'public-work', 'connect', 'free-llms'];
+    const sections = ['hero', 'galaxy', 'chess', 'systems', 'about', 'expertise', 'connect', 'free-llms'];
     const handleScroll = () => {
       const scrollPos = window.scrollY + 200;
       for (const sectionId of sections) {
@@ -96,7 +94,7 @@ export default function App() {
   }, []);
 
   const handleExploreLab = () => {
-    const el = document.getElementById('lab');
+    const el = document.getElementById('systems');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
@@ -126,7 +124,7 @@ export default function App() {
             : 'fixed inset-0 z-0 pointer-events-none transition-opacity duration-700'
         }
         style={{
-          opacity: isGalaxyLabOpen ? 1 : activeSection === 'hero' ? 0.2 : 0.045,
+          opacity: isGalaxyLabOpen ? 1 : activeSection === 'hero' ? 0.78 : 0.045,
           filter: isGalaxyLabOpen ? 'none' : 'saturate(0.82)',
         }}
       >
@@ -189,12 +187,10 @@ export default function App() {
           onOpenFullscreenGalaxy={() => setIsGalaxyLabOpen(true)}
         />
         <ChessSection />
-        <FlagshipSystemsSection onSelectProject={openProjectDetail} />
-        <ResearchLabSection onSelectProject={openProjectDetail} />
+        <ProjectArchitectureShowcase onSelectProject={openProjectDetail} />
         <YouTubeStrip />
         <AboutSection />
         <ExpertiseSection />
-        <PublicWorkSection onSelectProject={openProjectDetail} />
         <ConnectSection />
         <FreeLlmApisSection onTestProvider={() => setChatOpen(true)} />
       </main>

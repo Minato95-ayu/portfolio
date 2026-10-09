@@ -12,6 +12,9 @@ import { sound } from '../../utils/audio.ts';
 
 export type GalaxyViewMode = 'SOLAR_SYSTEM' | 'SPIRAL_GALAXY' | 'ORRERY_3D';
 
+const linearToSrgb = (channel: number) =>
+  channel <= 0.0031308 ? channel * 12.92 : 1.055 * channel ** (1 / 2.4) - 0.055;
+
 const createSurfaceTexture = (body: TechCelestialBody) => {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
@@ -41,9 +44,12 @@ const createSurfaceTexture = (body: TechCelestialBody) => {
       const blend = Math.max(0, Math.min(1, variation));
       const pixel = (y * canvas.width + x) * 4;
 
-      image.data[pixel] = (primary.r * (1 - blend) + secondary.r * blend) * 255 * shading;
-      image.data[pixel + 1] = (primary.g * (1 - blend) + secondary.g * blend) * 255 * shading;
-      image.data[pixel + 2] = (primary.b * (1 - blend) + secondary.b * blend) * 255 * shading;
+      image.data[pixel] =
+        linearToSrgb((primary.r * (1 - blend) + secondary.r * blend) * shading) * 255;
+      image.data[pixel + 1] =
+        linearToSrgb((primary.g * (1 - blend) + secondary.g * blend) * shading) * 255;
+      image.data[pixel + 2] =
+        linearToSrgb((primary.b * (1 - blend) + secondary.b * blend) * shading) * 255;
       image.data[pixel + 3] = 255;
     }
   }
@@ -241,7 +247,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.2;
     renderer.setSize(width, height);
     rendererRef.current = renderer;
 
@@ -327,7 +333,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     sunGroup.add(sunSprite);
 
     // Central Sun Light
-    const sunLight = new THREE.PointLight(0xffe7b0, 4.2, 52, 1.25);
+    const sunLight = new THREE.PointLight(0xffe7b0, 7, 52, 1.25);
     sunLight.position.set(0, 0, 0);
     sunGroup.add(sunLight);
 
@@ -391,7 +397,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
         color: new THREE.Color(body.secondaryColor ?? body.color),
         side: THREE.BackSide,
         transparent: true,
-        opacity: 0.12,
+        opacity: 0.22,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
@@ -406,7 +412,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
         bumpMap: surfaceTexture,
         bumpScale: 0.05,
         emissive: body.hexColor,
-        emissiveIntensity: 0.045,
+        emissiveIntensity: 0.3,
         roughness: body.category === 'AI_MODEL' ? 0.62 : 0.86,
         metalness: 0.1,
       });
@@ -523,10 +529,10 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
     worldGroup.add(starField);
 
     // Ambient and directional lighting for planet 3D depth
-    const ambientLight = new THREE.AmbientLight(0x53617e, 0.9);
+    const ambientLight = new THREE.AmbientLight(0x53617e, 2);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xc4e7ff, 0.56);
+    const dirLight = new THREE.DirectionalLight(0xc4e7ff, 1.4);
     dirLight.position.set(10, 20, 15);
     scene.add(dirLight);
 
@@ -768,7 +774,7 @@ export const TechGalaxySolarSystemScene: React.FC<TechGalaxySolarSystemSceneProp
         entry.sprite.material.opacity = targetOpacity;
         (entry.orbitLine.material as THREE.LineBasicMaterial).opacity = lineOpacity;
         (entry.planetMesh.material as THREE.MeshStandardMaterial).emissiveIntensity =
-          isSelectedCategory ? 0.065 : 0.015;
+          isSelectedCategory ? 0.3 : 0.07;
       });
 
       // 4. Galaxy Dust Rotation
