@@ -18,7 +18,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex flex-col justify-between pt-18 sm:pt-20 lg:pt-20 xl:pt-24 pb-6 sm:pb-8 lg:pb-8 xl:pb-12 px-3.5 sm:px-6 lg:px-8 max-w-7xl mx-auto z-10"
+      className="hero-shell relative min-h-screen flex flex-col justify-between pt-18 sm:pt-20 lg:pt-20 xl:pt-24 pb-6 sm:pb-8 lg:pb-8 xl:pb-12 px-3.5 sm:px-6 lg:px-8 max-w-[1440px] mx-auto z-10"
       aria-label="Hero Introduction"
     >
       {/* Top HUD Readouts */}
@@ -62,23 +62,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <span className="truncate">DEEP-TECH SYSTEMS ARCHITECT & FOUNDER</span>
           </div>
 
-          <div className="space-y-1 sm:space-y-1.5">
-            <h1 className="text-4xl xs:text-5xl sm:text-6xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold tracking-[-0.065em] text-white leading-[1.02] break-words">
+          <div className="space-y-1 sm:space-y-1.5 hero-copy">
+            <h1 className="hero-title text-4xl xs:text-5xl sm:text-6xl lg:text-[7rem] xl:text-[8rem] 2xl:text-[9rem] font-extrabold tracking-[-0.09em] text-white leading-[0.82] break-words">
               AYUSH{' '}
-              <span className="bg-gradient-to-r from-[#B6FF5C] via-[#52D7F2] to-[#A88BFF] bg-clip-text text-transparent">
+              <span className="hero-name-gradient bg-gradient-to-r from-[#B6FF5C] via-[#52D7F2] to-[#A88BFF] bg-clip-text text-transparent">
                 KAUSHIK
               </span>
             </h1>
-            <p className="text-base sm:text-xl lg:text-xl xl:text-2xl text-[#38bdf8] font-semibold tracking-[-0.025em]">
+            <p className="hero-subtitle text-base sm:text-xl lg:text-xl xl:text-2xl text-[#38bdf8] font-semibold tracking-[-0.025em]">
               Founder @ Adumate · Creator of AAYU
             </p>
           </div>
 
-          <p className="text-sm sm:text-base lg:text-base xl:text-lg text-white/90 font-normal max-w-2xl leading-relaxed">
+          <p className="hero-description text-sm sm:text-base lg:text-base xl:text-lg text-white/90 font-normal max-w-[55rem] leading-relaxed">
             I build compilers, AI infrastructure, and distributed systems—from language design and runtime internals to production-facing developer tools.
           </p>
 
-          <p className="text-xs sm:text-sm text-white/65 max-w-xl leading-relaxed">
+          <p className="hero-footnote text-xs sm:text-sm text-white/65 max-w-[48rem] leading-relaxed">
             Creator of the AAYU language project and founder of Adumate. Currently studying mathematics and turning systems research into working prototypes.
           </p>
 
@@ -135,7 +135,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
         {/* Right Verified Technical Status Identity Card (5 cols) */}
         <div className="lg:col-span-5 w-full">
-          <div className="relative bg-[#0A1019]/95 border border-white/[0.12] p-4 sm:p-5 lg:p-4.5 xl:p-6 rounded-2xl backdrop-blur-xl shadow-[0_22px_80px_rgba(0,0,0,0.42)] hover:border-[#B6FF5C]/40 transition-all duration-300 group">
+          <div className="relative bg-[#0A1019]/95 border border-white/[0.12] p-4 sm:p-5 lg:p-4.5 xl:p-6 rounded-2xl backdrop-blur-xl shadow-[0_22px_80px_rgba(0,0,0,0.42)] hover:border-[#B6FF5C]/40 transition-all duration-300 group hero-identity-card">
             {/* Corner cybernetic accents */}
             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#C6FF3D]" />
             <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#C6FF3D]" />

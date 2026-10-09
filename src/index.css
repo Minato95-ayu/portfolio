@@ -135,12 +135,58 @@ main section > div > h2 {
   max-width: 20ch;
 }
 
-#hero h1 {
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.6);
+.hero-shell {
+  position: relative;
 }
 
+.hero-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(103, 143, 255, 0.08), transparent 26%),
+    radial-gradient(circle at 78% 14%, rgba(198, 255, 61, 0.06), transparent 22%),
+    radial-gradient(circle at 42% 30%, rgba(76, 201, 240, 0.05), transparent 30%);
+  pointer-events: none;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-title {
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.65);
+  letter-spacing: -0.09em;
+  filter: drop-shadow(0 0 18px rgba(134, 155, 255, 0.14));
+}
+
+.hero-name-gradient {
+  display: inline-block;
+  background-size: 200% 100%;
+  background-position: left center;
+  animation: heroGradientSweep 7s ease-in-out infinite alternate;
+}
+
+.hero-subtitle,
+.hero-description,
+.hero-footnote,
 #hero p {
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.75);
+}
+
+.hero-identity-card {
+  transform: translateY(8px);
+}
+
+@keyframes heroGradientSweep {
+  0% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    background-position: 100% 50%;
+    filter: hue-rotate(18deg);
+  }
 }
 
 pre,
